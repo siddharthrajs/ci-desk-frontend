@@ -101,26 +101,41 @@ export interface DownstreamResponse {
 
 // ── WPSR ─────────────────────────────────────────────────────────────────────
 
-export interface WPSRRow {
-  label: string;
-  current: number | null;
-  prior_week: number | null;
-  difference: number | null;
-  percent_change: number | null;
-  year_ago: number | null;
+/**
+ * A WPSR row carries each key listed in the section's `label_columns`
+ * (string) plus each key listed in `numeric_columns` (float | null).
+ * The shape is dynamic per section, so we widen to a string-keyed map.
+ */
+export type WPSRRow = Record<string, string | number | null>;
+
+export interface WPSRPeriodDates {
+  current?: string;
+  prior_week?: string;
+  year_ago?: string;
+  two_years_ago?: string;
+}
+
+export interface WPSRSection {
+  name: string;
+  title: string;
+  label_columns: string[];   // ('label',) or ('group','label')
+  numeric_columns: string[]; // ordered field names in `rows`
+  column_headers: string[];  // display labels paired with numeric_columns
+  period_dates: WPSRPeriodDates;
+  rows: WPSRRow[];
 }
 
 export interface WPSRTable {
   table_number: number;
   title: string;
-  rows: WPSRRow[];
+  sections: WPSRSection[];
   hash: string;
   last_fetched: string;
 }
 
 export interface WPSRResponse {
   tables: Record<string, WPSRTable>;
-  /** SHA-256 digest — field name is `hash` in the actual API response */
+  /** SHA-256 digest across all 9 tables */
   hash: string;
   last_fetched: string;
   last_updated: string;

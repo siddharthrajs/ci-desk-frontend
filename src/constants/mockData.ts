@@ -28,6 +28,7 @@ export const NAV_TABS = [
   { id: 'upstream',   label: 'UPSTREAM',   path: '/upstream' },
   { id: 'midstream',  label: 'MIDSTREAM',  path: '/midstream' },
   { id: 'downstream', label: 'DOWNSTREAM', path: '/downstream' },
+  { id: 'reports',    label: 'REPORTS',    path: '/reports' },
   { id: 'components', label: 'COMPONENTS', path: '/components' },
 ] as const
 

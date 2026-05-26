@@ -35,6 +35,10 @@ export const getDownstreamData = (): Promise<DownstreamResponse> =>
 export const getWpsrTables = (): Promise<WPSRResponse> =>
   apiFetch('/api/reports/wpsr');
 
+/** Force-refresh: backend re-scrapes EIA and bypasses its 1-hour cache. */
+export const refreshWpsrTables = (): Promise<WPSRResponse> =>
+  apiFetch('/api/reports/wpsr?refresh=true');
+
 export const getCotPositions = (): Promise<COTResponse> =>
   apiFetch('/api/reports/cot');
 
