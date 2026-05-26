@@ -23,6 +23,34 @@ interface ForwardCurvePanelProps {
   onRemove?: () => void
 }
 
+type SeriesKey = 'bid' | 'ask' | 'mid' | 'vwap'
+
+interface SeriesStyle {
+  label: string
+  color: string
+  dashed: boolean
+}
+
+const BID_COLOR = '#38bdf8'   // sky blue
+const ASK_COLOR = '#fb7185'   // rose
+const MID_COLOR = '#a78bfa'   // violet
+
+function getSeriesStyles(panelColor: string): Record<SeriesKey, SeriesStyle> {
+  return {
+    bid:  { label: 'BID',  color: BID_COLOR,  dashed: true  },
+    ask:  { label: 'ASK',  color: ASK_COLOR,  dashed: true  },
+    mid:  { label: 'MID',  color: MID_COLOR,  dashed: false },
+    vwap: { label: 'VWAP', color: panelColor, dashed: false },
+  }
+}
+
+const DEFAULT_VISIBLE: Record<SeriesKey, boolean> = {
+  bid: true,
+  ask: true,
+  mid: false,
+  vwap: true,
+}
+
 function fmt(v: number | null | undefined, decimals = 2): string {
   if (v === null || v === undefined) return '—'
   return v.toFixed(decimals)
@@ -51,18 +79,31 @@ interface TooltipState {
   x: number
   y: number
   label: string
-  mid: number | null
   bid: number | null
   ask: number | null
+  mid: number | null
+  vwap: number | null
   settlement: number | null
 }
 
-function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]; color: string; unit: string; height: number }) {
+function ForwardCurveChart({
+  curve,
+  color,
+  unit,
+  height,
+  visible,
+}: {
+  curve: CurvePoint[]
+  color: string
+  unit: string
+  height: number
+  visible: Record<SeriesKey, boolean>
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
-  const midRef = useRef<ISeriesApi<'Line'> | null>(null)
-  const bidRef = useRef<ISeriesApi<'Line'> | null>(null)
-  const askRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const seriesRef = useRef<Record<SeriesKey, ISeriesApi<'Line'> | null>>({
+    bid: null, ask: null, mid: null, vwap: null,
+  })
   // time(seconds) → point lookup, used for crosshair tooltip + tick labels
   const lookupRef = useRef<Map<number, CurvePoint>>(new Map())
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
@@ -120,31 +161,20 @@ function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]
     })
     chartRef.current = chart
 
-    midRef.current = chart.addSeries(LineSeries, {
-      color,
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerRadius: 3,
-    })
-    bidRef.current = chart.addSeries(LineSeries, {
-      color,
-      lineWidth: 1,
-      lineStyle: LineStyle.Dashed,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    })
-    askRef.current = chart.addSeries(LineSeries, {
-      color,
-      lineWidth: 1,
-      lineStyle: LineStyle.Dashed,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    })
-    bidRef.current.applyOptions({ color: `${color}80` })
-    askRef.current.applyOptions({ color: `${color}80` })
+    const styles = getSeriesStyles(color)
+    const keys: SeriesKey[] = ['bid', 'ask', 'mid', 'vwap']
+    for (const k of keys) {
+      const s = styles[k]
+      seriesRef.current[k] = chart.addSeries(LineSeries, {
+        color: s.color,
+        lineWidth: s.dashed ? 1 : 2,
+        lineStyle: s.dashed ? LineStyle.Dashed : LineStyle.Solid,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: !s.dashed,
+        crosshairMarkerRadius: 3,
+      })
+    }
 
     chart.subscribeCrosshairMove(param => {
       if (!param.point || !param.time || param.point.x < 0 || param.point.y < 0) {
@@ -161,9 +191,10 @@ function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]
         x: param.point.x,
         y: param.point.y,
         label: pt.label,
-        mid: pt.mid,
         bid: pt.bid,
         ask: pt.ask,
+        mid: pt.mid,
+        vwap: pt.vwap,
         settlement: pt.settlement,
       })
     })
@@ -179,50 +210,50 @@ function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]
       ro.disconnect()
       chart.remove()
       chartRef.current = null
-      midRef.current = null
-      bidRef.current = null
-      askRef.current = null
+      seriesRef.current = { bid: null, ask: null, mid: null, vwap: null }
     }
   }, [])
 
-  // Push curve data
+  // Push curve data (respects visibility — hidden series get an empty array)
   useEffect(() => {
-    if (!chartRef.current || !midRef.current || !bidRef.current || !askRef.current) return
+    if (!chartRef.current) return
+    const series = seriesRef.current
+    if (!series.bid || !series.ask || !series.mid || !series.vwap) return
 
     const lookup = new Map<number, CurvePoint>()
-    const midData: LineData[] = []
-    const bidData: LineData[] = []
-    const askData: LineData[] = []
+    const data: Record<SeriesKey, LineData[]> = { bid: [], ask: [], mid: [], vwap: [] }
 
     for (const pt of curve) {
       const time = tenorToTime(pt.label)
       if (time === null) continue
       lookup.set(time as number, pt)
-      const px = pt.mid ?? pt.settlement
-      if (px !== null && px !== undefined) midData.push({ time, value: px })
-      if (pt.bid !== null && pt.bid !== undefined) bidData.push({ time, value: pt.bid })
-      if (pt.ask !== null && pt.ask !== undefined) askData.push({ time, value: pt.ask })
+      if (visible.bid && pt.bid !== null && pt.bid !== undefined) data.bid.push({ time, value: pt.bid })
+      if (visible.ask && pt.ask !== null && pt.ask !== undefined) data.ask.push({ time, value: pt.ask })
+      if (visible.mid && pt.mid !== null && pt.mid !== undefined) data.mid.push({ time, value: pt.mid })
+      if (visible.vwap && pt.vwap !== null && pt.vwap !== undefined) data.vwap.push({ time, value: pt.vwap })
     }
 
     lookupRef.current = lookup
-    midRef.current.setData(midData)
-    bidRef.current.setData(bidData)
-    askRef.current.setData(askData)
-    if (midData.length > 0 || bidData.length > 0 || askData.length > 0) {
+    ;(['bid', 'ask', 'mid', 'vwap'] as SeriesKey[]).forEach(k => series[k]?.setData(data[k]))
+
+    if (data.bid.length || data.ask.length || data.mid.length || data.vwap.length) {
       chartRef.current.timeScale().fitContent()
     }
-  }, [curve])
+  }, [curve, visible.bid, visible.ask, visible.mid, visible.vwap])
 
   // Update line colors when color prop changes
   useEffect(() => {
-    midRef.current?.applyOptions({ color })
-    bidRef.current?.applyOptions({ color: `${color}80` })
-    askRef.current?.applyOptions({ color: `${color}80` })
+    const styles = getSeriesStyles(color)
+    ;(['bid', 'ask', 'mid', 'vwap'] as SeriesKey[]).forEach(k => {
+      seriesRef.current[k]?.applyOptions({ color: styles[k].color })
+    })
   }, [color])
 
   useEffect(() => {
     chartRef.current?.applyOptions({ height })
   }, [height])
+
+  const styles = getSeriesStyles(color)
 
   return (
     <div style={{ position: 'relative' }}>
@@ -246,9 +277,10 @@ function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]
           <div style={{ marginBottom: 4, letterSpacing: '0.06em', color: 'var(--color-text-secondary)' }}>
             {tooltip.label} <span style={{ color: 'var(--color-text-tertiary)' }}>{unit}</span>
           </div>
-          <div style={{ color, lineHeight: 1.7 }}>MID: {fmt(tooltip.mid)}</div>
-          <div style={{ color: 'var(--color-bull)', lineHeight: 1.7 }}>BID: {fmt(tooltip.bid)}</div>
-          <div style={{ color: 'var(--color-amber)', lineHeight: 1.7 }}>ASK: {fmt(tooltip.ask)}</div>
+          <div style={{ color: styles.bid.color, lineHeight: 1.7 }}>BID: {fmt(tooltip.bid)}</div>
+          <div style={{ color: styles.ask.color, lineHeight: 1.7 }}>ASK: {fmt(tooltip.ask)}</div>
+          <div style={{ color: styles.vwap.color, lineHeight: 1.7 }}>VWAP: {fmt(tooltip.vwap)}</div>
+          <div style={{ color: styles.mid.color, lineHeight: 1.7 }}>MID: {fmt(tooltip.mid)}</div>
           {tooltip.settlement !== null && (
             <div style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>SETT: {fmt(tooltip.settlement)}</div>
           )}
@@ -258,12 +290,52 @@ function ForwardCurveChart({ curve, color, unit, height }: { curve: CurvePoint[]
   )
 }
 
+function SeriesToggle({
+  seriesKey,
+  style,
+  active,
+  onToggle,
+}: {
+  seriesKey: SeriesKey
+  style: SeriesStyle
+  active: boolean
+  onToggle: (key: SeriesKey) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(seriesKey)}
+      style={{
+        background: active ? 'var(--color-bg-elevated)' : 'transparent',
+        border: `1px solid ${active ? style.color : 'var(--color-border)'}`,
+        color: active ? style.color : 'var(--color-text-tertiary)',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 9,
+        letterSpacing: '0.08em',
+        padding: '2px 6px',
+        lineHeight: 1.3,
+        cursor: 'pointer',
+        opacity: active ? 1 : 0.55,
+      }}
+    >
+      {style.label}
+    </button>
+  )
+}
+
 export function ForwardCurvePanel({ product, displayName, curve, color, unit, chartHeight = 180, onRemove }: ForwardCurvePanelProps) {
   const name = displayName ?? product.toUpperCase()
-  const hasData = curve.some(p => p.mid !== null || p.bid !== null || p.ask !== null)
+  const hasData = curve.some(p => p.mid !== null || p.bid !== null || p.ask !== null || p.vwap !== null)
   const visibleRows = curve
-    .filter(p => p.bid !== null || p.ask !== null || p.mid !== null || p.settlement !== null)
+    .filter(p => p.bid !== null || p.ask !== null || p.mid !== null || p.vwap !== null || p.settlement !== null)
     .slice(0, 10)
+
+  const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(DEFAULT_VISIBLE)
+  const styles = getSeriesStyles(color)
+
+  function toggle(key: SeriesKey) {
+    setVisible(v => ({ ...v, [key]: !v[key] }))
+  }
 
   const liveBadge = (
     <Badge variant={hasData ? 'bull' : 'muted'}>
@@ -304,8 +376,19 @@ export function ForwardCurvePanel({ product, displayName, curve, color, unit, ch
       noPadding
     >
       <div style={{ padding: '8px 8px 0' }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+          {(['bid', 'ask', 'vwap', 'mid'] as SeriesKey[]).map(k => (
+            <SeriesToggle
+              key={k}
+              seriesKey={k}
+              style={styles[k]}
+              active={visible[k]}
+              onToggle={toggle}
+            />
+          ))}
+        </div>
         {hasData ? (
-          <ForwardCurveChart curve={curve} color={color} unit={unit} height={chartHeight} />
+          <ForwardCurveChart curve={curve} color={color} unit={unit} height={chartHeight} visible={visible} />
         ) : (
           <div style={{
             height: chartHeight,
@@ -331,7 +414,7 @@ export function ForwardCurvePanel({ product, displayName, curve, color, unit, ch
         }}>
           <thead>
             <tr style={{ borderTop: '1px solid var(--color-border)' }}>
-              {['TENOR', 'BID', 'ASK', 'MID', 'SETT', 'STATE'].map(h => (
+              {['TENOR', 'BID', 'ASK', 'VWAP', 'MID', 'SETT', 'STATE'].map(h => (
                 <th key={h} style={{
                   padding: '4px 8px',
                   textAlign: 'right',
@@ -349,7 +432,7 @@ export function ForwardCurvePanel({ product, displayName, curve, color, unit, ch
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{
+                <td colSpan={7} style={{
                   padding: '16px 8px',
                   textAlign: 'center',
                   color: 'var(--color-text-tertiary)',
@@ -366,13 +449,16 @@ export function ForwardCurvePanel({ product, displayName, curve, color, unit, ch
                   <td style={{ padding: '3px 8px', color: 'var(--color-text-secondary)', textAlign: 'left', letterSpacing: '0.05em' }}>
                     {row.label}
                   </td>
-                  <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--color-bull)' }}>
+                  <td style={{ padding: '3px 8px', textAlign: 'right', color: BID_COLOR }}>
                     {fmt(row.bid)}
                   </td>
-                  <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--color-amber)' }}>
+                  <td style={{ padding: '3px 8px', textAlign: 'right', color: ASK_COLOR }}>
                     {fmt(row.ask)}
                   </td>
-                  <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--color-text-primary)' }}>
+                  <td style={{ padding: '3px 8px', textAlign: 'right', color }}>
+                    {fmt(row.vwap)}
+                  </td>
+                  <td style={{ padding: '3px 8px', textAlign: 'right', color: MID_COLOR }}>
                     {fmt(row.mid)}
                   </td>
                   <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--color-text-secondary)' }}>

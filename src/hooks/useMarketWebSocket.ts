@@ -5,6 +5,7 @@ export interface QuoteData {
   bid: number | null
   ask: number | null
   mid: number | null
+  vwap: number | null
   settlement: number | null
   state: string | null
   lastUpdate: number
@@ -23,6 +24,7 @@ export interface CurvePoint {
   bid: number | null
   ask: number | null
   mid: number | null
+  vwap: number | null
   settlement: number | null
   state: string | null
 }
@@ -99,6 +101,7 @@ export function useMarketWebSocket() {
         bid: q?.bid ?? null,
         ask: q?.ask ?? null,
         mid: q?.mid ?? null,
+        vwap: q?.vwap ?? null,
         settlement: q?.settlement ?? null,
         state: q?.state ?? null,
       })
@@ -181,11 +184,13 @@ export function useMarketWebSocket() {
       mid = ask
     }
 
+    const vwap = parsePrice(msg.VWAP)
     const prev = pendingRef.current[instrumentId] ?? quotesRef.current[instrumentId]
     pendingRef.current[instrumentId] = {
       bid: bid ?? prev?.bid ?? null,
       ask: ask ?? prev?.ask ?? null,
       mid: mid ?? prev?.mid ?? null,
+      vwap: vwap ?? prev?.vwap ?? null,
       settlement: parsePrice(msg.settlementPrice) ?? prev?.settlement ?? null,
       state: (msg.state as string | null) ?? prev?.state ?? null,
       lastUpdate: Date.now(),
