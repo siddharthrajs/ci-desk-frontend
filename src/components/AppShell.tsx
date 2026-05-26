@@ -17,7 +17,7 @@ export function AppShell() {
         overflowY: 'auto',
       }}>
         <div style={{
-          maxWidth: 1440,
+          maxWidth: 1800,
           margin: '0 auto',
           padding: '24px 20px',
         }}>

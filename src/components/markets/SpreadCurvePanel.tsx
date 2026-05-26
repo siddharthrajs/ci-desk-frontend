@@ -12,6 +12,7 @@ import type { ProductCurves, CurvePoint } from '../../hooks/useMarketWebSocket'
 
 interface SpreadCurvePanelProps {
   curves: ProductCurves
+  chartHeight?: number
 }
 
 interface SpreadPoint {
@@ -99,7 +100,7 @@ const SPREAD_SERIES = [
   { key: 'ho_crack', label: 'HO Crack', color: '#ef5350' },
 ]
 
-export function SpreadCurvePanel({ curves }: SpreadCurvePanelProps) {
+export function SpreadCurvePanel({ curves, chartHeight = 200 }: SpreadCurvePanelProps) {
   const data = buildSpreads(curves)
   const hasData = data.some(d => d.wti_brent !== null || d.gasoil_crack !== null || d.ho_crack !== null)
 
@@ -126,7 +127,7 @@ export function SpreadCurvePanel({ curves }: SpreadCurvePanelProps) {
     <Panel title="SPREAD & CRACK CURVES" headerRight={headerRight} noPadding>
       <div style={{ padding: '12px 12px 16px' }}>
         {hasData ? (
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
             <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
               <XAxis
                 dataKey="label"
@@ -159,7 +160,7 @@ export function SpreadCurvePanel({ curves }: SpreadCurvePanelProps) {
           </ResponsiveContainer>
         ) : (
           <div style={{
-            height: 200,
+            height: chartHeight,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

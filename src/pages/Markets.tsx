@@ -31,6 +31,7 @@ const TYPES: { value: InstrumentType; suffix: string }[] = [
 ]
 
 const STORAGE_KEY = 'ci-desk.markets.selections.v1'
+const HEIGHT_STORAGE_KEY = 'ci-desk.markets.chartHeight.v1'
 
 const DEFAULT_SELECTIONS: Selection[] = [
   { product: 'Brent', type: 'OUTRIGHT' },
@@ -38,6 +39,36 @@ const DEFAULT_SELECTIONS: Selection[] = [
   { product: 'Gasoil', type: 'OUTRIGHT' },
   { product: 'HeatingOil', type: 'OUTRIGHT' },
 ]
+
+type ChartSize = 'S' | 'M' | 'L' | 'XL'
+
+const CHART_HEIGHTS: Record<ChartSize, number> = {
+  S: 120,
+  M: 180,
+  L: 260,
+  XL: 360,
+}
+
+const CHART_SIZES: ChartSize[] = ['S', 'M', 'L', 'XL']
+const DEFAULT_CHART_SIZE: ChartSize = 'M'
+
+function loadChartSize(): ChartSize {
+  try {
+    const raw = localStorage.getItem(HEIGHT_STORAGE_KEY)
+    if (raw && (CHART_SIZES as string[]).includes(raw)) return raw as ChartSize
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_CHART_SIZE
+}
+
+function saveChartSize(size: ChartSize) {
+  try {
+    localStorage.setItem(HEIGHT_STORAGE_KEY, size)
+  } catch {
+    /* ignore */
+  }
+}
 
 function loadSelections(): Selection[] {
   try {
@@ -88,12 +119,19 @@ export function Markets() {
   const { connected, curves, lastTick, feedError } = useMarketWebSocket()
 
   const [selections, setSelections] = useState<Selection[]>(() => loadSelections())
+  const [chartSize, setChartSize] = useState<ChartSize>(() => loadChartSize())
   const [pickerOpen, setPickerOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     saveSelections(selections)
   }, [selections])
+
+  useEffect(() => {
+    saveChartSize(chartSize)
+  }, [chartSize])
+
+  const chartHeight = CHART_HEIGHTS[chartSize]
 
   useEffect(() => {
     if (!pickerOpen) return
@@ -204,6 +242,40 @@ export function Markets() {
         )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }} ref={pickerRef}>
+          <span style={{
+            color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.07em',
+            fontSize: 10,
+          }}>
+            HEIGHT
+          </span>
+          <div style={{ display: 'flex', border: '1px solid var(--color-border)', height: 24 }}>
+            {CHART_SIZES.map((size, i) => {
+              const active = size === chartSize
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setChartSize(size)}
+                  title={`${size} (${CHART_HEIGHTS[size]}px)`}
+                  style={{
+                    background: active ? 'var(--color-text-primary)' : 'var(--color-bg-elevated)',
+                    color: active ? 'var(--color-bg-panel)' : 'var(--color-text-primary)',
+                    border: 'none',
+                    borderLeft: i === 0 ? 'none' : '1px solid var(--color-border)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.07em',
+                    padding: '0 8px',
+                    cursor: active ? 'default' : 'pointer',
+                    minWidth: 28,
+                  }}
+                >
+                  {size}
+                </button>
+              )
+            })}
+          </div>
           <button
             type="button"
             onClick={() => setPickerOpen(o => !o)}
@@ -399,6 +471,7 @@ export function Markets() {
                         curve={curve}
                         color={product.color}
                         unit={product.unit}
+                        chartHeight={chartHeight}
                         onRemove={() => removeAt(idx)}
                       />
                     )
@@ -410,7 +483,7 @@ export function Markets() {
         </div>
       )}
 
-      <SpreadCurvePanel curves={curves} />
+      <SpreadCurvePanel curves={curves} chartHeight={chartHeight} />
     </div>
   )
 }
