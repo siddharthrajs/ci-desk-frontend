@@ -1,6 +1,6 @@
 import { Panel } from '../ui/Panel'
 import { Badge } from '../ui/Badge'
-import type { DownstreamResponse, SeriesPoint } from '../../types/api'
+import type { CrackSpreadsResponse } from '../../types/api'
 import { ApiError } from '../../types/api'
 
 function Skel({ h = 10, w }: { h?: number; w?: string | number }) {
@@ -16,21 +16,10 @@ function Skel({ h = 10, w }: { h?: number; w?: string | number }) {
   )
 }
 
-function computeZScore(series: SeriesPoint[]): number | null {
-  if (series.length < 3) return null
-  const values = series.map(p => p.value)
-  const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length
-  const std = Math.sqrt(variance)
-  if (std === 0) return null
-  return (values[0] - mean) / std
-}
-
-function signalLabel(z: number | null): { label: string; color: string } {
-  if (z == null) return { label: 'N/A', color: 'var(--color-text-tertiary)' }
-  if (z > 1)  return { label: 'WIDE',    color: 'var(--color-bull)' }
-  if (z < -1) return { label: 'TIGHT',   color: 'var(--color-bear)' }
-  return       { label: 'NEUTRAL',         color: 'var(--color-amber)' }
+const SIGNAL_STYLE: Record<string, { color: string; bg: string }> = {
+  ELEVATED:  { color: 'var(--color-bull)',  bg: 'rgba(61,214,196,0.1)' },
+  DEPRESSED: { color: 'var(--color-bear)',  bg: 'rgba(229,72,77,0.1)' },
+  NEUTRAL:   { color: 'var(--color-amber)', bg: 'rgba(245,166,35,0.1)' },
 }
 
 const TH: React.CSSProperties = {
@@ -56,12 +45,14 @@ const TD: React.CSSProperties = {
 
 interface SpreadRow {
   name: string
-  series: SeriesPoint[] | null
-  pending?: boolean
+  current: number | null
+  wow: number | null
+  z: number | null
+  signal: string
 }
 
 interface Props {
-  data: DownstreamResponse | undefined
+  data: CrackSpreadsResponse | undefined
   isLoading: boolean
   error: Error | null
 }
@@ -74,10 +65,34 @@ export function CrackSpreadsPanel({ data, isLoading, error }: Props) {
     : null
 
   const rows: SpreadRow[] = [
-    { name: 'WTI 3-2-1',    series: data?.crack_spreads.three_two_one ?? null },
-    { name: 'BRENT 3-2-1',  series: null, pending: true },
-    { name: 'RBOB CRACK',   series: data?.crack_spreads.rbob_crack ?? null },
-    { name: 'HO CRACK',     series: data?.crack_spreads.ho_crack ?? null },
+    {
+      name: '3-2-1 CRACK',
+      current: data?.crack_321 ?? null,
+      wow: data?.wow_changes.crack_321 ?? null,
+      z: data?.z_scores.crack_321 ?? null,
+      signal: data?.signals.crack_321 ?? 'NEUTRAL',
+    },
+    {
+      name: 'RBOB CRACK',
+      current: data?.crack_rbob ?? null,
+      wow: data?.wow_changes.crack_rbob ?? null,
+      z: data?.z_scores.crack_rbob ?? null,
+      signal: data?.signals.crack_rbob ?? 'NEUTRAL',
+    },
+    {
+      name: 'HO CRACK',
+      current: data?.crack_ho ?? null,
+      wow: data?.wow_changes.crack_ho ?? null,
+      z: data?.z_scores.crack_ho ?? null,
+      signal: data?.signals.crack_ho ?? 'NEUTRAL',
+    },
+    {
+      name: 'BRENT-WTI',
+      current: data?.brent_wti ?? null,
+      wow: data?.wow_changes.brent_wti ?? null,
+      z: data?.z_scores.brent_wti ?? null,
+      signal: data?.signals.brent_wti ?? 'NEUTRAL',
+    },
   ]
 
   return (
@@ -100,7 +115,7 @@ export function CrackSpreadsPanel({ data, isLoading, error }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {(['SPREAD', 'CURRENT $/BBL', 'WoW Δ', 'Z-SCORE', 'SIGNAL'] as const).map((h, i) => (
+              {(['SPREAD', 'CURRENT $/BBL', 'WOW Δ', 'Z-SCORE', 'SIGNAL'] as const).map((h, i) => (
                 <th key={h} style={{ ...TH, textAlign: i === 0 ? 'left' : 'right' }}>{h}</th>
               ))}
             </tr>
@@ -121,86 +136,51 @@ export function CrackSpreadsPanel({ data, isLoading, error }: Props) {
                   colSpan={5}
                   style={{ ...TD, padding: '24px 16px', textAlign: 'center', color: 'var(--color-bear)' }}
                 >
-                  FETCH FAILED
-                  {error instanceof ApiError ? ` · HTTP ${error.status}` : ` · ${error.message}`}
+                  DATA UNAVAILABLE
+                  {error instanceof ApiError ? ` · HTTP ${error.status}` : ''}
                 </td>
               </tr>
             ) : (
               rows.map(row => {
-                const latest = row.series?.[0]
-                const current = latest?.value
-                const wow = latest?.wow_change
-                const wowPct = latest?.wow_pct_change
-                const z = row.series ? computeZScore(row.series) : null
-                const sig = signalLabel(z)
-
-                const isPos = wow != null && wow > 0
-                const wowColor = wow == null
+                const sigStyle = SIGNAL_STYLE[row.signal] ?? SIGNAL_STYLE.NEUTRAL
+                const wowColor = row.wow == null
                   ? 'var(--color-text-tertiary)'
-                  : isPos
+                  : row.wow > 0
                   ? 'var(--color-bull)'
                   : 'var(--color-bear)'
+                const zColor = row.z == null
+                  ? 'var(--color-text-tertiary)'
+                  : sigStyle.color
 
                 return (
                   <tr
                     key={row.name}
-                    style={{ opacity: row.pending ? 0.45 : 1 }}
-                    onMouseEnter={e => {
-                      if (!row.pending) e.currentTarget.style.background = 'var(--color-bg-hover)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'transparent'
-                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-bg-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                   >
                     {/* Name */}
-                    <td
-                      style={{
-                        ...TD,
-                        fontWeight: 600,
-                        color: 'var(--color-text-primary)',
-                      }}
-                    >
+                    <td style={{ ...TD, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                       {row.name}
-                      {row.pending && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 9,
-                            color: 'var(--color-amber)',
-                            letterSpacing: '0.06em',
-                          }}
-                        >
-                          PENDING
-                        </span>
-                      )}
                     </td>
 
                     {/* Current */}
                     <td style={{ ...TD, textAlign: 'right', color: 'var(--color-text-primary)', fontWeight: 500 }}>
-                      {current != null ? `$${current.toFixed(2)}` : '—'}
+                      {row.current != null ? `$${row.current.toFixed(2)}` : '—'}
                     </td>
 
                     {/* WoW */}
                     <td style={{ ...TD, textAlign: 'right', color: wowColor }}>
-                      {wow != null ? (
+                      {row.wow != null ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                          <span style={{ fontSize: '0.75em' }}>{wow > 0 ? '▲' : '▼'}</span>
-                          <span>
-                            {wow > 0 ? '+' : ''}{wow.toFixed(2)}
-                          </span>
-                          {wowPct != null && (
-                            <span style={{ fontSize: '0.85em', color: 'var(--color-text-tertiary)', marginLeft: 2 }}>
-                              ({wowPct > 0 ? '+' : ''}{wowPct.toFixed(1)}%)
-                            </span>
-                          )}
+                          <span style={{ fontSize: '0.75em' }}>{row.wow > 0 ? '▲' : '▼'}</span>
+                          <span>{row.wow > 0 ? '+' : ''}{row.wow.toFixed(2)}</span>
                         </span>
                       ) : '—'}
                     </td>
 
                     {/* Z-score */}
-                    <td style={{ ...TD, textAlign: 'right', color: sig.color }}>
-                      {z != null ? z.toFixed(2) : '—'}
+                    <td style={{ ...TD, textAlign: 'right', color: zColor }}>
+                      {row.z != null ? (row.z > 0 ? '+' : '') + row.z.toFixed(2) : '—'}
                     </td>
 
                     {/* Signal */}
@@ -211,19 +191,13 @@ export function CrackSpreadsPanel({ data, isLoading, error }: Props) {
                           fontSize: 10,
                           fontWeight: 700,
                           letterSpacing: '0.08em',
-                          color: sig.color,
-                          background: sig.label === 'WIDE'
-                            ? 'rgba(61,214,196,0.1)'
-                            : sig.label === 'TIGHT'
-                            ? 'rgba(229,72,77,0.1)'
-                            : sig.label === 'NEUTRAL'
-                            ? 'rgba(245,166,35,0.1)'
-                            : 'transparent',
+                          color: sigStyle.color,
+                          background: sigStyle.bg,
                           padding: '2px 6px',
                           borderRadius: 3,
                         }}
                       >
-                        {sig.label}
+                        {row.signal}
                       </span>
                     </td>
                   </tr>
@@ -244,7 +218,7 @@ export function CrackSpreadsPanel({ data, isLoading, error }: Props) {
             letterSpacing: '0.06em',
           }}
         >
-          3-2-1 = (2×RBOB + 1×HO − 3×WTI) / 3 · Z-SCORE OVER {data?.crack_spreads.three_two_one.length ?? 0} DAILY OBS
+          3-2-1 = (2×RBOB + 1×HO − 3×WTI) / 3 · Z-SCORE OVER 90 DAILY OBS
         </span>
       </div>
     </Panel>

@@ -4,6 +4,7 @@ import { SupplyBalancePanel } from '../components/upstream/SupplyBalancePanel'
 import { UsProductionPanel } from '../components/upstream/UsProductionPanel'
 import { DucWellsPanel } from '../components/upstream/DucWellsPanel'
 import { NonOpecProductionPanel } from '../components/upstream/NonOpecProductionPanel'
+import { CrudeImportsPanel } from '../components/upstream/CrudeImportsPanel'
 
 export function Upstream() {
   const { data, isLoading, error } = useUpstreamData()
@@ -46,12 +47,15 @@ export function Upstream() {
 
         {/* ── Middle row: US production (65%) + DUC wells (35%) ──────────── */}
         <div className="mid-row-grid">
-          <UsProductionPanel {...panelProps} />
-          <DucWellsPanel {...panelProps} />
+          <UsProductionPanel />
+          <DucWellsPanel />
         </div>
 
         {/* ── Bottom row: Non-OPEC production by country (full width) ─────── */}
         <NonOpecProductionPanel {...panelProps} />
+
+        {/* ── Crude import origins (full width) ────────────────────────────── */}
+        <CrudeImportsPanel />
       </div>
     </div>
   )

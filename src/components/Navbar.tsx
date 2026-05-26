@@ -39,7 +39,7 @@ export function Navbar() {
           </span>
           <span style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 10,
+            fontSize: 11,
             color: 'var(--color-text-tertiary)',
             letterSpacing: '0.06em',
           }}>
@@ -48,7 +48,7 @@ export function Navbar() {
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 9,
+          fontSize: 11,
           color: 'var(--color-text-tertiary)',
           letterSpacing: '0.06em',
           marginTop: 1,
@@ -111,7 +111,7 @@ export function Navbar() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-tertiary)'; e.currentTarget.style.color = 'var(--color-text-primary)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border-muted)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
         >
-          <span style={{ fontSize: 10, opacity: 0.7 }}>⌘K</span>
+          <span style={{ fontSize: 11, opacity: 0.7 }}>⌘K</span>
           <span>SEARCH</span>
         </button>
 

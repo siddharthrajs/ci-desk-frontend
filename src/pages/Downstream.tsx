@@ -1,12 +1,13 @@
-import { useDownstreamData } from '../hooks/useApiData'
+import { useCrackSpreads, useRefineryUtilization, useProductDemand } from '../hooks/useApiData'
 import { CrackSpreadsPanel } from '../components/downstream/CrackSpreadsPanel'
 import { CrackSpreadHistoryPanel } from '../components/downstream/CrackSpreadHistoryPanel'
 import { RefineryUtilizationHistoryPanel } from '../components/downstream/RefineryUtilizationHistoryPanel'
 import { ProductDemandPanel } from '../components/downstream/ProductDemandPanel'
 
 export function Downstream() {
-  const { data, isLoading, error } = useDownstreamData()
-  const panelProps = { data, isLoading, error: error as Error | null }
+  const crackQuery  = useCrackSpreads()
+  const utilQuery   = useRefineryUtilization()
+  const demandQuery = useProductDemand()
 
   return (
     <div>
@@ -39,14 +40,30 @@ export function Downstream() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* ── Top row: Crack spreads table | Crack spread history ─────────── */}
         <div className="ds-top-grid">
-          <CrackSpreadsPanel {...panelProps} />
-          <CrackSpreadHistoryPanel {...panelProps} />
+          <CrackSpreadsPanel
+            data={crackQuery.data}
+            isLoading={crackQuery.isLoading}
+            error={crackQuery.error as Error | null}
+          />
+          <CrackSpreadHistoryPanel
+            data={crackQuery.data}
+            isLoading={crackQuery.isLoading}
+            error={crackQuery.error as Error | null}
+          />
         </div>
 
         {/* ── Bottom row: Refinery util history | Product demand ───────────── */}
         <div className="ds-bottom-grid">
-          <RefineryUtilizationHistoryPanel {...panelProps} />
-          <ProductDemandPanel {...panelProps} />
+          <RefineryUtilizationHistoryPanel
+            data={utilQuery.data}
+            isLoading={utilQuery.isLoading}
+            error={utilQuery.error as Error | null}
+          />
+          <ProductDemandPanel
+            data={demandQuery.data}
+            isLoading={demandQuery.isLoading}
+            error={demandQuery.error as Error | null}
+          />
         </div>
       </div>
     </div>

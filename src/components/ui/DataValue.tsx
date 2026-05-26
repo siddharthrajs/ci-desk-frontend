@@ -11,7 +11,7 @@ interface SizeTokens {
 }
 
 const SIZE_MAP: Record<DataSize, SizeTokens> = {
-  sm:   { valueFontSize: 12, changeFontSize: 10, fontWeight: 500, changeGap: 2, arrowSize: 8  },
+  sm:   { valueFontSize: 13, changeFontSize: 11, fontWeight: 500, changeGap: 2, arrowSize: 9  },
   md:   { valueFontSize: 15, changeFontSize: 11, fontWeight: 600, changeGap: 2, arrowSize: 9  },
   lg:   { valueFontSize: 22, changeFontSize: 12, fontWeight: 600, changeGap: 3, arrowSize: 10 },
   hero: { valueFontSize: 48, changeFontSize: 13, fontWeight: 700, changeGap: 4, arrowSize: 11 },

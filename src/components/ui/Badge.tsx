@@ -47,7 +47,7 @@ export function Badge({ children, variant = 'default', style, onClick }: BadgePr
         display: 'inline-flex',
         alignItems: 'center',
         fontFamily: 'var(--font-mono)',
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 600,
         letterSpacing: '0.07em',
         padding: '2px 6px',

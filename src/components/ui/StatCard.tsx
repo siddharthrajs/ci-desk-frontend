@@ -41,7 +41,7 @@ export function StatCard({
       <div
         style={{
           fontFamily: 'var(--font-sans)',
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: 700,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
@@ -64,7 +64,7 @@ export function StatCard({
         <div
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 10,
+            fontSize: 11,
             color: 'var(--color-text-tertiary)',
             letterSpacing: '0.05em',
             marginTop: 2,

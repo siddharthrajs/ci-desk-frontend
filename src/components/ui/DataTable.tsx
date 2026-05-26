@@ -116,7 +116,7 @@ export function DataTable<T extends Record<string, unknown>>({
           width: '100%',
           borderCollapse: 'collapse',
           fontFamily: 'var(--font-mono)',
-          fontSize: 12,
+          fontSize: 13,
         }}
       >
         {/* Head */}
@@ -129,7 +129,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   padding: '6px 10px 7px',
                   textAlign: col.align ?? 'left',
                   fontFamily: 'var(--font-sans)',
-                  fontSize: 9,
+                  fontSize: 12,
                   fontWeight: 700,
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',

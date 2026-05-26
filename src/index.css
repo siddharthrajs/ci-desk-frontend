@@ -10,13 +10,13 @@
   --color-bg-hover:     #1c1c1c;
 
   /* Borders */
-  --color-border:       #222222;
-  --color-border-muted: #2a2a2a;
+  --color-border:       #2e2e2e;
+  --color-border-muted: #363636;
 
   /* Text */
   --color-text-primary:   #e8e8e8;
-  --color-text-secondary: #888888;
-  --color-text-tertiary:  #555555;
+  --color-text-secondary: #9a9a9a;
+  --color-text-tertiary:  #777777;
 
   /* Data accents */
   --color-bull:   #3dd6c4;
@@ -94,7 +94,7 @@ body {
   align-items: center;
   border-radius: var(--radius-pill);
   padding: 2px 10px;
-  font-size: 0.75rem;
+  font-size: 0.79rem;
   font-weight: 500;
   font-family: var(--font-mono);
   line-height: 1.6;
@@ -105,13 +105,13 @@ body {
   align-items: center;
   border-radius: var(--radius-badge);
   padding: 1px 5px;
-  font-size: 0.72rem;
+  font-size: 0.79rem;
   font-family: var(--font-mono);
 }
 
 .label {
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.86rem;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;

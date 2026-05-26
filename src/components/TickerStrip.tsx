@@ -33,7 +33,7 @@ export function TickerStrip() {
         }} />
         <span style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.12em',
           color: 'var(--color-bull)',
@@ -56,7 +56,7 @@ export function TickerStrip() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
+                  fontSize: 11,
                   letterSpacing: '0.08em',
                   color: inst.isSpread ? 'var(--color-amber)' : 'var(--color-text-secondary)',
                 }}>
@@ -88,7 +88,7 @@ export function TickerStrip() {
         marginLeft: 18,
         flexShrink: 0,
         fontFamily: 'var(--font-mono)',
-        fontSize: 10,
+        fontSize: 11,
         color: 'var(--color-text-tertiary)',
         letterSpacing: '0.06em',
       }}>

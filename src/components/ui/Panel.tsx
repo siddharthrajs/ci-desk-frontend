@@ -57,7 +57,7 @@ export function Panel({
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 10,
+                fontSize: 11,
                 color: 'var(--color-text-tertiary)',
                 marginTop: 2,
                 letterSpacing: '0.06em',

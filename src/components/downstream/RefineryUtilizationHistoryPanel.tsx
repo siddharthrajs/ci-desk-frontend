@@ -9,8 +9,7 @@ import {
 } from 'recharts'
 import { Panel } from '../ui/Panel'
 import { Badge } from '../ui/Badge'
-import type { DownstreamResponse } from '../../types/api'
-import type { SeriesPoint } from '../../types/api'
+import type { RefineryUtilizationResponse } from '../../types/api'
 import { ApiError } from '../../types/api'
 
 function Skel({ h = 10 }: { h?: number }) {
@@ -27,62 +26,29 @@ function Skel({ h = 10 }: { h?: number }) {
 }
 
 function fmtDate(dateStr: string) {
-  const [, m, d] = dateStr.split('-')
+  const [, m] = dateStr.split('-')
   const MONTHS = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-  return `${MONTHS[+m]} ${+d}`
-}
-
-function avgLatest(series: SeriesPoint[]): number | null {
-  return series[0]?.value ?? null
+  return MONTHS[+m]
 }
 
 interface Props {
-  data: DownstreamResponse | undefined
+  data: RefineryUtilizationResponse | undefined
   isLoading: boolean
   error: Error | null
 }
 
 export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Props) {
-  const util = data?.refinery_util_history
-
-  // Derive national as simple avg of PADD 1-5 by period
   const chartData = useMemo(() => {
-    if (!util) return []
+    if (!data?.history?.length) return []
+    return data.history.map(pt => ({
+      label: fmtDate(pt.date),
+      national: pt.national,
+      padd3: pt.padd3,
+    }))
+  }, [data])
 
-    const padds = [util.padd1, util.padd2, util.padd3, util.padd4, util.padd5]
-
-    // Build period index across all PADDs
-    const periodSet = new Set(padds.flatMap(s => s.map(p => p.period)))
-
-    const idx: Record<string, Record<string, number>> = {}
-    ;[
-      [util.padd1, 'p1'],
-      [util.padd2, 'p2'],
-      [util.padd3, 'p3'],
-      [util.padd4, 'p4'],
-      [util.padd5, 'p5'],
-    ].forEach(([series, key]) => {
-      for (const pt of series as SeriesPoint[]) {
-        if (!idx[pt.period]) idx[pt.period] = {}
-        idx[pt.period][key as string] = pt.value
-      }
-    })
-
-    return [...periodSet]
-      .sort()
-      .map(period => {
-        const vals = Object.values(idx[period] ?? {}).filter(v => v != null)
-        const natEst = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
-        return {
-          label: fmtDate(period),
-          natEst,
-          padd3: idx[period]?.p3 ?? null,
-        }
-      })
-  }, [util])
-
-  const padd3Latest = util ? avgLatest(util.padd3) : null
-  const pointCount = chartData.length
+  const hasData = chartData.length > 0
+  const tickInterval = Math.max(1, Math.floor((chartData.length - 1) / 8))
 
   return (
     <Panel
@@ -91,7 +57,7 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
       noPadding
       headerRight={
         <>
-          <Badge variant="muted">EIA WEEKLY · {pointCount}WK</Badge>
+          <Badge variant="muted">EIA WEEKLY · {data?.history?.length ?? 0}WK</Badge>
           <Badge
             variant="muted"
             style={{ color: 'var(--color-amber)', borderColor: 'rgba(245,166,35,0.3)' }}
@@ -106,8 +72,8 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
         {!error && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             {[
-              { label: 'PADD 3 GULF COAST', value: padd3Latest },
-              { label: 'NATIONAL (EST.)', value: chartData[chartData.length - 1]?.natEst ?? null },
+              { label: 'PADD 3 GULF COAST', value: data?.padd3_current ?? null },
+              { label: 'NATIONAL (EST.)',    value: data?.national_current ?? null },
             ].map(c => (
               <div
                 key={c.label}
@@ -159,11 +125,11 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
             }}
           >
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-bear)', letterSpacing: '0.08em' }}>
-              FETCH FAILED
-              {error instanceof ApiError ? ` · HTTP ${error.status}` : ` · ${error.message}`}
+              DATA UNAVAILABLE
+              {error instanceof ApiError ? ` · HTTP ${error.status}` : ''}
             </span>
           </div>
-        ) : chartData.length === 0 ? (
+        ) : !hasData ? (
           <div
             style={{
               height: 160,
@@ -178,7 +144,7 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
             </span>
           </div>
         ) : (
-          <div style={{ position: 'relative' }}>
+          <div>
             {/* Legend */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
               {[
@@ -201,16 +167,13 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
             </div>
 
             <ResponsiveContainer width="100%" height={150}>
-              <LineChart
-                data={chartData}
-                margin={{ top: 4, right: 6, bottom: 0, left: 0 }}
-              >
+              <LineChart data={chartData} margin={{ top: 4, right: 6, bottom: 0, left: 0 }}>
                 <XAxis
                   dataKey="label"
                   tick={{ fontFamily: 'var(--font-mono)', fontSize: 8, fill: 'var(--color-text-tertiary)' }}
                   axisLine={false}
                   tickLine={false}
-                  interval={Math.floor(chartData.length / 7)}
+                  interval={tickInterval}
                 />
                 <YAxis
                   tick={{ fontFamily: 'var(--font-mono)', fontSize: 8, fill: 'var(--color-text-tertiary)' }}
@@ -219,7 +182,7 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
                   tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                   width={38}
                   tickCount={4}
-                  domain={['auto', 'auto']}
+                  domain={[70, 100]}
                 />
                 <Tooltip
                   cursor={{ stroke: 'var(--color-border-muted)', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -233,12 +196,15 @@ export function RefineryUtilizationHistoryPanel({ data, isLoading, error }: Prop
                   }}
                   itemStyle={{ color: 'var(--color-text-secondary)' }}
                   labelStyle={{ color: 'var(--color-text-secondary)', fontSize: 10, marginBottom: 2 }}
-                  formatter={(v: unknown, name: unknown) => [`${(v as number).toFixed(1)}%`, name as string]}
+                  formatter={(v: unknown, name: unknown) => {
+                    if (v == null) return ['—', name as string]
+                    return [`${(v as number).toFixed(1)}%`, name as string]
+                  }}
                   wrapperStyle={{ outline: 'none' }}
                 />
                 <Line
                   type="monotone"
-                  dataKey="natEst"
+                  dataKey="national"
                   name="NAT EST."
                   stroke="#f5a623"
                   strokeWidth={1.5}

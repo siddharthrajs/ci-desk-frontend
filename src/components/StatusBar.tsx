@@ -53,7 +53,7 @@ export function StatusBar() {
           }} />
           <span style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 10,
+            fontSize: 11,
             color: 'var(--color-text-secondary)',
             letterSpacing: '0.06em',
           }}>
@@ -65,7 +65,7 @@ export function StatusBar() {
 
         <span style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 10,
+          fontSize: 11,
           color: 'var(--color-text-tertiary)',
           letterSpacing: '0.05em',
           overflow: 'hidden',
@@ -82,7 +82,7 @@ export function StatusBar() {
         left: '50%',
         transform: 'translateX(-50%)',
         fontFamily: 'var(--font-mono)',
-        fontSize: 10,
+        fontSize: 11,
         color: 'var(--color-text-tertiary)',
         letterSpacing: '0.05em',
         whiteSpace: 'nowrap',
@@ -94,7 +94,7 @@ export function StatusBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <span style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 10,
+          fontSize: 11,
           color: 'var(--color-text-tertiary)',
           letterSpacing: '0.05em',
         }}>
@@ -107,7 +107,7 @@ export function StatusBar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 9,
+              fontSize: 11,
               color: 'var(--color-text-tertiary)',
               letterSpacing: '0.08em',
             }}>LOC</span>
@@ -123,7 +123,7 @@ export function StatusBar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 9,
+              fontSize: 11,
               color: 'var(--color-text-tertiary)',
               letterSpacing: '0.08em',
             }}>UTC</span>

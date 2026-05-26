@@ -154,6 +154,157 @@ export interface MacroResponse {
   last_updated: string;
 }
 
+// ── Downstream V2 (sub-endpoints) ────────────────────────────────────────────
+
+export interface CrackHistoryPoint {
+  date: string;
+  crack_321: number | null;
+  crack_rbob: number | null;
+  crack_ho: number | null;
+  brent_wti: number | null;
+  wti: number | null;
+}
+
+export interface CrackZScores {
+  crack_321: number | null;
+  crack_rbob: number | null;
+  crack_ho: number | null;
+  brent_wti: number | null;
+}
+
+export interface CrackSignals {
+  crack_321: string;
+  crack_rbob: string;
+  crack_ho: string;
+  brent_wti: string;
+}
+
+export interface CrackWowChanges {
+  crack_321: number | null;
+  crack_rbob: number | null;
+  crack_ho: number | null;
+  brent_wti: number | null;
+}
+
+export interface CrackSpreadsResponse {
+  last_updated: string;
+  wti: number | null;
+  brent: number | null;
+  rbob_gal: number | null;
+  ho_gal: number | null;
+  crack_321: number | null;
+  crack_rbob: number | null;
+  crack_ho: number | null;
+  brent_wti: number | null;
+  z_scores: CrackZScores;
+  signals: CrackSignals;
+  wow_changes: CrackWowChanges;
+  history_90d: CrackHistoryPoint[];
+}
+
+export interface RefineryHistoryPoint {
+  date: string;
+  national: number | null;
+  padd3: number | null;
+}
+
+export interface RefineryUtilizationResponse {
+  last_updated: string;
+  national_current: number | null;
+  padd3_current: number | null;
+  history: RefineryHistoryPoint[];
+}
+
+export interface ProductHistoryPoint {
+  date: string;
+  value: number;
+}
+
+export interface ProductDemandSeries {
+  current_4wk_avg: number | null;
+  yoy_pct: number | null;
+  history: ProductHistoryPoint[];
+}
+
+export interface ProductDemandResponse {
+  last_updated: string;
+  gasoline: ProductDemandSeries;
+  distillate: ProductDemandSeries;
+  jet: ProductDemandSeries;
+  total: ProductDemandSeries;
+}
+
+// ── Upstream sub-endpoints ────────────────────────────────────────────────────
+
+export interface MonthlyProductionPoint {
+  date: string;
+  us_total: number | null;
+  padd3: number | null;
+  padd2: number | null;
+  gom: number | null;
+}
+
+export interface WeeklyProductionPoint {
+  date: string;
+  value: number;
+}
+
+export interface UsProductionResponse {
+  weekly_estimate_mbd: number | null;
+  weekly_wow_change: number | null;
+  monthly_history: MonthlyProductionPoint[];
+  weekly_history: WeeklyProductionPoint[];
+  last_updated: string;
+}
+
+export interface BasinDuc {
+  current: number | null;
+  mom_change: number | null;
+}
+
+export interface DucHistoryPoint {
+  date: string;
+  total: number | null;
+  permian: number | null;
+  eagle_ford: number | null;
+  bakken: number | null;
+  niobrara: number | null;
+  appalachia: number | null;
+  anadarko: number | null;
+  haynesville: number | null;
+}
+
+export interface DucWellsResponse {
+  last_updated: string;
+  total_duc: number | null;
+  mom_change: number | null;
+  mom_pct: number | null;
+  yoy_change: number | null;
+  yoy_pct: number | null;
+  signal: 'DRAW' | 'BUILD' | 'NEUTRAL';
+  history: DucHistoryPoint[];
+  basins: Record<string, BasinDuc>;
+}
+
+export interface ImportOrigin {
+  country: string;
+  volume_mbd: number;
+  share_pct: number;
+  mom_change: number | null;
+}
+
+export interface ImportHistoryPoint {
+  date: string;
+  value: number;
+}
+
+export interface CrudeImportsResponse {
+  last_updated: string;
+  total_imports_mbd: number | null;
+  top_origins: ImportOrigin[];
+  history_total: ImportHistoryPoint[];
+}
+
 // ── Error ────────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
