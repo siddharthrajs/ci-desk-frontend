@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { useMarketWebSocket } from '../hooks/useMarketWebSocket'
+import { useMarkets } from '../contexts/MarketsContext'
 import { ForwardCurvePanel } from '../components/markets/ForwardCurvePanel'
 import { SpreadCurvePanel } from '../components/markets/SpreadCurvePanel'
 
@@ -116,7 +116,7 @@ function typeSuffix(type: InstrumentType): string {
 }
 
 export function Markets() {
-  const { connected, curves, lastTick, feedError } = useMarketWebSocket()
+  const { connected, curves, lastTick, feedError } = useMarkets()
 
   const [selections, setSelections] = useState<Selection[]>(() => loadSelections())
   const [chartSize, setChartSize] = useState<ChartSize>(() => loadChartSize())

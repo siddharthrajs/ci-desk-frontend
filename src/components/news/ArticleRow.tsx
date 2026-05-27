@@ -15,49 +15,55 @@ export function ArticleRow({ a }: { a: NewsArticle }) {
       rel="noopener noreferrer"
       title={a.summary ?? a.headline}
       style={{
-        display: 'flex',
-        alignItems: 'baseline',
-        gap: 8,
-        padding: '7px 0',
-        borderBottom: '1px solid var(--color-border-muted)',
+        display: 'block',
+        padding: '10px 12px',
+        marginBottom: 8,
+        background: 'var(--color-bg-elevated, rgba(255,255,255,0.02))',
+        border: '1px solid var(--color-border-muted)',
+        borderLeft: '2px solid var(--color-amber)',
+        borderRadius: 3,
         textDecoration: 'none',
-        background: 'transparent',
-        transition: 'background 0.1s',
+        transition: 'background 0.12s, border-color 0.12s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'var(--color-bg-hover)'
+        e.currentTarget.style.borderColor = 'var(--color-border)'
+        e.currentTarget.style.borderLeftColor = 'var(--color-amber)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'var(--color-bg-elevated, rgba(255,255,255,0.02))'
+        e.currentTarget.style.borderColor = 'var(--color-border-muted)'
+        e.currentTarget.style.borderLeftColor = 'var(--color-amber)'
+      }}
     >
-      <span style={{
-        color: 'var(--color-text-tertiary)',
-        fontSize: 7,
-        flexShrink: 0,
-        lineHeight: '17px',
-      }}>
-        ●
-      </span>
-      <span style={{
-        fontFamily: 'var(--font-sans)',
-        fontSize: 12,
-        color: 'var(--color-text-primary)',
-        lineHeight: 1.4,
-        flex: 1,
-        minWidth: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}>
-        {a.headline}
-      </span>
-      <span style={{
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
         fontFamily: 'var(--font-mono)',
         fontSize: 10,
         color: 'var(--color-text-tertiary)',
-        letterSpacing: '0.04em',
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
       }}>
-        {a.source ?? ''}{a.datetime ? ` · ${timeAgo(a.datetime)}` : ''}
-      </span>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+          {a.source ?? '—'}
+        </span>
+        {a.datetime != null && (
+          <span style={{ marginLeft: 'auto', flexShrink: 0 }}>{timeAgo(a.datetime)}</span>
+        )}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-sans)',
+        fontSize: 12.5,
+        fontWeight: 500,
+        color: 'var(--color-text-primary)',
+        lineHeight: 1.45,
+        wordBreak: 'break-word',
+      }}>
+        {a.headline}
+      </div>
     </a>
   )
 }

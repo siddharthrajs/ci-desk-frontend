@@ -60,7 +60,7 @@ export function CompanyNewsFeed() {
       {/* Articles */}
       <div style={{
         overflowY: 'auto',
-        height: 'calc(100dvh - 448px)',
+        height: 'calc(100dvh - 464px)',
         padding: '2px 16px 8px',
       }}>
         {isLoading && (

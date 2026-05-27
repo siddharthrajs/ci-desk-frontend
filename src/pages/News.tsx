@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { QuotesBar } from '../components/news/QuotesBar'
 import { MarketNewsFeed } from '../components/news/MarketNewsFeed'
 import { CompanyNewsFeed } from '../components/news/CompanyNewsFeed'
+import { FinancialJuiceWidget } from '../components/news/FinancialJuiceWidget'
 import { EconomicCalendar } from '../components/news/EconomicCalendar'
 
 type Tab = 'news' | 'calendar'
@@ -71,9 +72,10 @@ export function News() {
 
       {/* Content */}
       {tab === 'news' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 18 }}>
           <MarketNewsFeed />
           <CompanyNewsFeed />
+          <FinancialJuiceWidget />
         </div>
       )}
 

@@ -60,6 +60,8 @@ body {
 
 #root {
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Monospace for all data/numbers */

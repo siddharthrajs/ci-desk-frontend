@@ -23,7 +23,7 @@ export function MarketNewsFeed() {
     >
       <div style={{
         overflowY: 'auto',
-        height: 'calc(100dvh - 388px)',
+        height: 'calc(100dvh - 391px)',
         padding: '2px 16px 8px',
       }}>
         {isLoading && (

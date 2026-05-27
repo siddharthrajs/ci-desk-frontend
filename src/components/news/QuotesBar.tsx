@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { useOilQuotes } from '../../hooks/useApiData'
 import type { QuoteData } from '../../types/api'
 
@@ -42,6 +43,34 @@ function QuoteCell({ q }: { q: QuoteData }) {
 
 export function QuotesBar() {
   const { data, isLoading } = useOilQuotes()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ isDown: false, startX: 0, scrollLeft: 0 })
+  const [dragging, setDragging] = useState(false)
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return
+    drag.current.isDown = true
+    drag.current.startX = e.clientX
+    drag.current.scrollLeft = scrollRef.current.scrollLeft
+    scrollRef.current.setPointerCapture(e.pointerId)
+    setDragging(true)
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.isDown || !scrollRef.current) return
+    e.preventDefault()
+    const walk = e.clientX - drag.current.startX
+    scrollRef.current.scrollLeft = drag.current.scrollLeft - walk
+  }
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current.isDown) return
+    drag.current.isDown = false
+    if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
+      scrollRef.current.releasePointerCapture(e.pointerId)
+    }
+    setDragging(false)
+  }
 
   return (
     <div style={{
@@ -80,14 +109,24 @@ export function QuotesBar() {
         </span>
       </div>
 
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        flex: 1,
-        height: '100%',
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-      }}>
+      <div
+        ref={scrollRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flex: 1,
+          height: '100%',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          cursor: dragging ? 'grabbing' : 'grab',
+          userSelect: dragging ? 'none' : 'auto',
+          touchAction: 'pan-x',
+        }}
+      >
         {isLoading && (
           <span style={{
             fontFamily: 'var(--font-mono)',
