@@ -1,12 +1,16 @@
 import { useState, type CSSProperties } from 'react'
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import { getWpsrTables, refreshWpsrTables } from '../../lib/api'
-import type { WPSRResponse, WPSRTable, WPSRPeriodDates } from '../../types/api'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
+import { getWpsrTable, refreshWpsrTable } from '../../lib/api'
+import type { WPSRTable, WPSRPeriodDates } from '../../types/api'
 import { Panel } from '../ui'
 import { WpsrSectionTable } from './WpsrSectionTable'
 import { WpsrKpiBar } from './WpsrKpiBar'
 
 const TABLE_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const
+
+const HOUR_MS = 60 * 60 * 1000
+
+const wpsrQueryKey = (n: number) => ['wpsr', n] as const
 
 const TABLE_SHORT_LABELS: Record<number, string> = {
   1: 'Balance',
@@ -61,21 +65,41 @@ function PeriodStrip({ dates }: { dates: WPSRPeriodDates }) {
 export function WpsrView() {
   const queryClient = useQueryClient()
   const [selectedTable, setSelectedTable] = useState<number>(1)
+  const [refreshingAll, setRefreshingAll] = useState(false)
 
-  const query = useQuery<WPSRResponse>({
-    queryKey: ['wpsr'],
-    queryFn: getWpsrTables,
-    staleTime: 60_000,
+  // Fire all 9 fetches in parallel; each table renders the moment its single
+  // request lands rather than waiting on the slowest one. Tables already
+  // cached in React Query during the same browser session resolve instantly.
+  const queries = useQueries({
+    queries: TABLE_NUMBERS.map(n => ({
+      queryKey: wpsrQueryKey(n),
+      queryFn:  () => getWpsrTable(n),
+      staleTime: HOUR_MS,
+    })),
   })
 
-  const refresh = useMutation({
-    mutationFn: refreshWpsrTables,
-    onSuccess: data => queryClient.setQueryData<WPSRResponse>(['wpsr'], data),
-  })
+  const selectedQuery = queries[selectedTable - 1]
+  const table: WPSRTable | undefined = selectedQuery.data
 
-  const isBusy = query.isFetching || refresh.isPending
-  const data = query.data
-  const table: WPSRTable | undefined = data?.tables[String(selectedTable)]
+  // Force-refresh: hit `?refresh=true` for every table in parallel and write
+  // results into the cache as they arrive. The selected table re-renders the
+  // moment it lands, even if 1-2 of the others are still in flight.
+  async function refreshAll() {
+    setRefreshingAll(true)
+    try {
+      await Promise.allSettled(
+        TABLE_NUMBERS.map(async n => {
+          const fresh = await refreshWpsrTable(n)
+          queryClient.setQueryData<WPSRTable>(wpsrQueryKey(n), fresh)
+        }),
+      )
+    } finally {
+      setRefreshingAll(false)
+    }
+  }
+
+  const inFlightCount = queries.filter(q => q.isFetching).length
+  const firstError = queries.find(q => q.error)?.error as Error | undefined
 
   // ── Header bar ──
   const headerBar = (
@@ -110,6 +134,16 @@ export function WpsrView() {
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {refreshingAll && inFlightCount > 0 && (
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--color-amber)',
+            letterSpacing: '0.06em',
+          }}>
+            {inFlightCount}/{TABLE_NUMBERS.length} IN FLIGHT
+          </span>
+        )}
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 10,
@@ -118,16 +152,16 @@ export function WpsrView() {
         }}>
           LAST FETCH:{' '}
           <span style={{ color: 'var(--color-text-secondary)' }}>
-            {formatFetchedAt(data?.last_fetched)}
+            {formatFetchedAt(table?.last_fetched)}
           </span>
         </span>
         <button
           type="button"
-          onClick={() => refresh.mutate()}
-          disabled={isBusy}
-          style={fetchButtonStyle(isBusy)}
+          onClick={refreshAll}
+          disabled={refreshingAll}
+          style={fetchButtonStyle(refreshingAll)}
         >
-          {isBusy ? 'FETCHING…' : 'FETCH NOW'}
+          {refreshingAll ? 'FETCHING…' : 'FETCH NOW'}
         </button>
       </div>
     </div>
@@ -146,6 +180,9 @@ export function WpsrView() {
     }}>
       {TABLE_NUMBERS.map((n, i) => {
         const active = n === selectedTable
+        const q = queries[n - 1]
+        const loading = q.isFetching
+        const errored = !!q.error && !q.data
         return (
           <button
             key={n}
@@ -170,9 +207,26 @@ export function WpsrView() {
               flexDirection: 'column',
               gap: 2,
               alignItems: 'center',
+              position: 'relative',
             }}
           >
-            <span style={{ opacity: 0.7, fontSize: 9 }}>TBL {n}</span>
+            <span style={{ opacity: 0.7, fontSize: 9, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>TBL {n}</span>
+              <span style={{
+                display: 'inline-block',
+                width: 5,
+                height: 5,
+                borderRadius: '50%',
+                background: errored
+                  ? 'var(--color-bear)'
+                  : loading
+                  ? 'var(--color-amber)'
+                  : q.data
+                  ? 'var(--color-bull)'
+                  : 'var(--color-text-tertiary)',
+                animation: loading ? 'wpsrPulse 1.2s ease-in-out infinite' : 'none',
+              }} />
+            </span>
             <span>{TABLE_SHORT_LABELS[n]}</span>
           </button>
         )
@@ -182,10 +236,10 @@ export function WpsrView() {
 
   // ── Body content ──
   let body: React.ReactNode
-  if (query.isLoading) {
-    body = <LoadingState message="LOADING WPSR…" />
-  } else if (query.error) {
-    body = <ErrorState message={(query.error as Error).message} />
+  if (!table && selectedQuery.isLoading) {
+    body = <LoadingState message={`LOADING TABLE ${selectedTable}…`} />
+  } else if (!table && selectedQuery.error) {
+    body = <ErrorState message={(selectedQuery.error as Error).message} />
   } else if (!table) {
     body = <LoadingState message="NO DATA" />
   } else {
@@ -211,6 +265,7 @@ export function WpsrView() {
 
   return (
     <div>
+      <style>{`@keyframes wpsrPulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
       {headerBar}
       <div style={{
         fontFamily: 'var(--font-sans)',
@@ -224,8 +279,19 @@ export function WpsrView() {
       </div>
       {selector}
       {body}
-      {refresh.isError && (
-        <ErrorState message={`Refresh failed: ${(refresh.error as Error).message}`} />
+      {firstError && table && (
+        <div style={{
+          marginTop: 10,
+          padding: '6px 10px',
+          background: 'var(--color-bg-panel)',
+          border: '1px solid var(--color-bear)',
+          color: 'var(--color-bear)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.06em',
+        }}>
+          ONE OR MORE TABLES FAILED: {firstError.message.toUpperCase()}
+        </div>
       )}
     </div>
   )

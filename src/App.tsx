@@ -5,6 +5,7 @@ import { Upstream } from './pages/Upstream'
 import { Midstream } from './pages/Midstream'
 import { Downstream } from './pages/Downstream'
 import { Reports } from './pages/Reports'
+import { News } from './pages/News'
 import { Showcase } from './pages/Showcase'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="midstream"  element={<Midstream />} />
           <Route path="downstream" element={<Downstream />} />
           <Route path="reports"    element={<Reports />} />
+          <Route path="news"       element={<News />} />
           <Route path="components" element={<Showcase />} />
         </Route>
       </Routes>

@@ -3,7 +3,7 @@ import type {
   UpstreamResponse,
   MidstreamResponse,
   DownstreamResponse,
-  WPSRResponse,
+  WPSRTable,
   COTResponse,
   MacroResponse,
   CrackSpreadsResponse,
@@ -12,6 +12,10 @@ import type {
   UsProductionResponse,
   DucWellsResponse,
   CrudeImportsResponse,
+  MarketNewsResponse,
+  CompanyNewsResponse,
+  OilQuotesResponse,
+  EconomicCalendarResponse,
 } from '../types/api';
 import { ApiError } from '../types/api';
 
@@ -32,12 +36,15 @@ export const getMidstreamData = (): Promise<MidstreamResponse> =>
 export const getDownstreamData = (): Promise<DownstreamResponse> =>
   apiFetch('/api/downstream');
 
-export const getWpsrTables = (): Promise<WPSRResponse> =>
-  apiFetch('/api/reports/wpsr');
+/** Per-table fetch. Lets the frontend fire 9 independent requests in parallel
+ *  so each table renders the moment its single CSV lands, rather than waiting
+ *  on the slowest of all 9. */
+export const getWpsrTable = (tableNumber: number): Promise<WPSRTable> =>
+  apiFetch(`/api/reports/wpsr/${tableNumber}`);
 
-/** Force-refresh: backend re-scrapes EIA and bypasses its 1-hour cache. */
-export const refreshWpsrTables = (): Promise<WPSRResponse> =>
-  apiFetch('/api/reports/wpsr?refresh=true');
+/** Same shape as getWpsrTable, but tells the backend to bypass its cache. */
+export const refreshWpsrTable = (tableNumber: number): Promise<WPSRTable> =>
+  apiFetch(`/api/reports/wpsr/${tableNumber}?refresh=true`);
 
 export const getCotPositions = (): Promise<COTResponse> =>
   apiFetch('/api/reports/cot');
@@ -62,3 +69,15 @@ export const getDucWells = (): Promise<DucWellsResponse> =>
 
 export const getCrudeImports = (): Promise<CrudeImportsResponse> =>
   apiFetch('/api/upstream/crude-imports');
+
+export const getMarketNews = (category = 'general'): Promise<MarketNewsResponse> =>
+  apiFetch(`/api/news/market?category=${encodeURIComponent(category)}`);
+
+export const getCompanyNews = (symbol: string): Promise<CompanyNewsResponse> =>
+  apiFetch(`/api/news/company?symbol=${encodeURIComponent(symbol)}`);
+
+export const getOilQuotes = (): Promise<OilQuotesResponse> =>
+  apiFetch('/api/news/quotes');
+
+export const getEconomicCalendar = (): Promise<EconomicCalendarResponse> =>
+  apiFetch('/api/news/calendar');

@@ -320,6 +320,69 @@ export interface CrudeImportsResponse {
   history_total: ImportHistoryPoint[];
 }
 
+// ── News (Finnhub) ────────────────────────────────────────────────────────────
+
+export interface NewsArticle {
+  id: number | null;
+  category: string | null;
+  datetime: number | null;
+  headline: string;
+  image: string | null;
+  related: string | null;
+  source: string | null;
+  summary: string | null;
+  url: string | null;
+}
+
+export interface MarketNewsResponse {
+  category: string;
+  articles: NewsArticle[];
+  last_updated: string;
+}
+
+export interface CompanyNewsResponse {
+  symbol: string;
+  from_date: string;
+  to_date: string;
+  articles: NewsArticle[];
+  last_updated: string;
+}
+
+export interface QuoteData {
+  symbol: string;
+  c: number | null;
+  d: number | null;
+  dp: number | null;
+  h: number | null;
+  l: number | null;
+  o: number | null;
+  pc: number | null;
+  t: number | null;
+}
+
+export interface OilQuotesResponse {
+  quotes: QuoteData[];
+  last_updated: string;
+}
+
+export interface EconomicEvent {
+  actual: number | null;
+  country: string | null;
+  estimate: number | null;
+  event: string | null;
+  impact: string | null;
+  prev: number | null;
+  time: string | null;
+  unit: string | null;
+}
+
+export interface EconomicCalendarResponse {
+  from_date: string;
+  to_date: string;
+  events: EconomicEvent[];
+  last_updated: string;
+}
+
 // ── Error ────────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
