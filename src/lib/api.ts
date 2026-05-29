@@ -98,8 +98,8 @@ export const getOilQuotes = (): Promise<OilQuotesResponse> =>
 export const getEconomicCalendar = (): Promise<EconomicCalendarResponse> =>
   apiFetch('/api/news/calendar');
 
-export const postAiSummary = (prompt?: string): Promise<AiSummaryResponse> => {
-  const body: AiSummaryRequest = prompt !== undefined ? { prompt } : {};
+export const postAiSummary = (prompt?: string, provider = 'gemini'): Promise<AiSummaryResponse> => {
+  const body: AiSummaryRequest = { provider, ...(prompt !== undefined ? { prompt } : {}) };
   return fetch(`${API_BASE_URL}/api/news/ai-summary`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -12,6 +12,7 @@ const DEFAULT_PROMPT =
 
 export function AiSummaryPanel() {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT)
+  const [provider, setProvider] = useState<'gemini' | 'openai'>('gemini')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<AiSummaryResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +22,7 @@ export function AiSummaryPanel() {
     setError(null)
     try {
       const customPrompt = prompt !== DEFAULT_PROMPT ? prompt : undefined
-      const data = await postAiSummary(customPrompt)
+      const data = await postAiSummary(customPrompt, provider)
       setResult(data)
     } catch {
       setError('Failed to generate summary. Please try again.')
@@ -47,6 +48,34 @@ export function AiSummaryPanel() {
         ) : null
       }
     >
+      {/* Provider selector */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-text-tertiary)', letterSpacing: '0.06em' }}>
+          PROVIDER
+        </span>
+        {(['gemini', 'openai'] as const).map(p => (
+          <button
+            key={p}
+            onClick={() => setProvider(p)}
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              padding: '3px 12px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              color: provider === p ? '#000' : 'var(--color-text-secondary)',
+              background: provider === p ? 'var(--color-amber)' : 'transparent',
+              transition: 'color 0.15s, background 0.15s',
+            }}
+          >
+            {p.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       <div style={{ marginBottom: 6 }}>
         <span style={{
           fontFamily: 'var(--font-mono)',

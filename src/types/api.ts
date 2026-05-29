@@ -415,6 +415,7 @@ export interface EconomicCalendarResponse {
 
 export interface AiSummaryRequest {
   prompt?: string;
+  provider?: string;
 }
 
 export interface AiSummaryResponse {
