@@ -19,6 +19,8 @@ import type {
   CompanyNewsResponse,
   OilQuotesResponse,
   EconomicCalendarResponse,
+  AiSummaryRequest,
+  AiSummaryResponse,
 } from '../types/api';
 import { ApiError } from '../types/api';
 
@@ -95,3 +97,15 @@ export const getOilQuotes = (): Promise<OilQuotesResponse> =>
 
 export const getEconomicCalendar = (): Promise<EconomicCalendarResponse> =>
   apiFetch('/api/news/calendar');
+
+export const postAiSummary = (prompt?: string): Promise<AiSummaryResponse> => {
+  const body: AiSummaryRequest = prompt !== undefined ? { prompt } : {};
+  return fetch(`${API_BASE_URL}/api/news/ai-summary`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(res => {
+    if (!res.ok) throw new ApiError(res.status, '/api/news/ai-summary');
+    return res.json() as Promise<AiSummaryResponse>;
+  });
+};

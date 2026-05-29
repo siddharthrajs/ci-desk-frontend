@@ -411,6 +411,18 @@ export interface EconomicCalendarResponse {
   last_updated: string;
 }
 
+// ── AI Summary ───────────────────────────────────────────────────────────────
+
+export interface AiSummaryRequest {
+  prompt?: string;
+}
+
+export interface AiSummaryResponse {
+  summary: string;
+  item_count: number;
+  generated_at: string;
+}
+
 // ── Error ────────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {

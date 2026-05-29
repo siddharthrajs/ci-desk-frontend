@@ -4,8 +4,9 @@ import { MarketNewsFeed } from '../components/news/MarketNewsFeed'
 import { CompanyNewsFeed } from '../components/news/CompanyNewsFeed'
 import { FinancialJuiceWidget } from '../components/news/FinancialJuiceWidget'
 import { EconomicCalendar } from '../components/news/EconomicCalendar'
+import { AiSummaryPanel } from '../components/news/AiSummaryPanel'
 
-type Tab = 'news' | 'calendar'
+type Tab = 'news' | 'calendar' | 'ai'
 
 function tabStyle(active: boolean): React.CSSProperties {
   return {
@@ -47,7 +48,7 @@ export function News() {
           color: 'var(--color-text-tertiary)',
           letterSpacing: '0.06em',
         }}>
-          MARKET · COMPANIES · ECONOMIC CALENDAR
+          MARKET · COMPANIES · ECONOMIC CALENDAR · AI SUMMARY
         </p>
       </div>
 
@@ -68,6 +69,7 @@ export function News() {
       }}>
         <button style={tabStyle(tab === 'news')} onClick={() => setTab('news')}>NEWS</button>
         <button style={tabStyle(tab === 'calendar')} onClick={() => setTab('calendar')}>CALENDAR</button>
+        <button style={tabStyle(tab === 'ai')} onClick={() => setTab('ai')}>AI SUMMARY</button>
       </div>
 
       {/* Content */}
@@ -79,6 +81,10 @@ export function News() {
 
       <div style={{ display: tab === 'calendar' ? 'block' : 'none' }}>
         <EconomicCalendar />
+      </div>
+
+      <div style={{ display: tab === 'ai' ? 'block' : 'none', maxWidth: 860 }}>
+        <AiSummaryPanel />
       </div>
     </div>
   )
