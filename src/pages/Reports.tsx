@@ -94,8 +94,12 @@ export function Reports() {
       </div>
 
       {/* ── Active report ───────────────────────────────────────────────── */}
-      {active.id === 'wpsr' && <WpsrView />}
-      {active.id === 'cot'  && <CotView />}
+      <div style={{ display: active.id === 'wpsr' ? 'block' : 'none' }}>
+        <WpsrView />
+      </div>
+      <div style={{ display: active.id === 'cot' ? 'block' : 'none' }}>
+        <CotView />
+      </div>
     </div>
   )
 }

@@ -1,165 +1,215 @@
-import {
-  BarChart,
-  Bar,
-  Cell,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts'
+/**
+ * Crude imports by country — toggleable between weekly preliminary (wimpc)
+ * and monthly final (crude-oil-imports). Renders:
+ *   - Top-10 country list as horizontal bars (HTML, not a chart)
+ *   - Total imports history as a lightweight-charts line below
+ */
+
+import { useMemo, useState } from 'react'
+import { LineSeries } from 'lightweight-charts'
 import { Panel } from '../ui/Panel'
-import { Badge } from '../ui/Badge'
-import { useCrudeImports } from '../../hooks/useApiData'
-import { ApiError } from '../../types/api'
+import { Pill, Badge } from '../ui/Badge'
+import type { ImportsFeed } from '../../types/api'
+import { useUsCrudeImports } from '../../hooks/useApiData'
+import { CadenceBadge, ErrorBlock, Skel, Delta } from './_shared'
+import { useLwChart, toLwPoints } from './lwChart'
 
-function fmtUtcTime(iso: string) {
-  return (
-    new Date(iso).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'UTC',
-    }) + ' UTC'
-  )
-}
+type FeedKey = 'weekly_preliminary' | 'monthly_final'
 
-function Skel({ h = 10, w }: { h?: number; w?: string | number }) {
+function CountryRow({
+  country, volume_mbd, share_pct, mom_change, is_opec_plus, maxVol,
+}: {
+  country: string
+  volume_mbd: number
+  share_pct: number
+  mom_change: number | null
+  is_opec_plus: boolean
+  maxVol: number
+}) {
+  const widthPct = maxVol > 0 ? (volume_mbd / maxVol) * 100 : 0
   return (
-    <div
-      style={{
-        width: w ?? '100%',
-        height: h,
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '160px 1fr 70px 60px 80px',
+      alignItems: 'center',
+      gap: 12,
+      padding: '6px 0',
+      borderBottom: '1px solid var(--color-border-muted)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+          color: 'var(--color-text-primary)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>{country}</span>
+        {is_opec_plus && (
+          <Badge variant="muted" style={{ fontSize: 9, color: 'var(--color-amber)', borderColor: 'rgba(245,166,35,0.4)' }}>
+            OPEC+
+          </Badge>
+        )}
+      </div>
+
+      {/* bar */}
+      <div style={{
+        position: 'relative',
+        height: 18,
         background: 'var(--color-bg-elevated)',
-        animation: 'pulse 1.4s ease-in-out infinite',
-      }}
-    />
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute',
+          left: 0, top: 0, bottom: 0,
+          width: `${widthPct}%`,
+          background: is_opec_plus ? 'rgba(245, 166, 35, 0.55)' : 'rgba(61, 214, 196, 0.55)',
+        }} />
+      </div>
+
+      <span style={{
+        textAlign: 'right',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 12,
+        color: 'var(--color-text-primary)',
+      }}>{volume_mbd.toFixed(2)}</span>
+      <span style={{
+        textAlign: 'right',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
+        color: 'var(--color-text-tertiary)',
+      }}>{share_pct.toFixed(1)}%</span>
+      <div style={{ textAlign: 'right' }}>
+        <Delta change={mom_change} decimals={2} compact />
+      </div>
+    </div>
   )
 }
 
 export function CrudeImportsPanel() {
-  const { data, isLoading, error } = useCrudeImports()
+  const { data, isLoading, error } = useUsCrudeImports()
+  const [feedKey, setFeedKey] = useState<FeedKey>('weekly_preliminary')
 
-  const updatedLabel = data?.last_updated ? fmtUtcTime(data.last_updated) : null
+  const feed: ImportsFeed | undefined = data?.[feedKey]
+  const maxVol = feed?.top_origins?.[0]?.volume_mbd ?? 0
 
-  const chartData = (data?.top_origins ?? []).map(o => ({
-    name:    o.country.toUpperCase().slice(0, 12),
-    value:   o.volume_mbd,
-    isCanada: o.country.toLowerCase().includes('canada'),
-  }))
+  const historyPoints = useMemo(() => {
+    if (!feed?.history?.length) return []
+    return toLwPoints(feed.history, 'value')
+  }, [feed])
 
-  const barHeight = Math.max(220, chartData.length * 28)
+  const containerRef = useLwChart(
+    chart => {
+      if (!historyPoints.length) return
+      const series = chart.addSeries(LineSeries, {
+        color: '#3dd6c4',
+        lineWidth: 2,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+      })
+      series.setData(historyPoints)
+    },
+    [historyPoints],
+  )
 
   return (
     <Panel
-      title="CRUDE IMPORTS BY ORIGIN"
-      noPadding
+      title="US CRUDE IMPORTS BY ORIGIN"
+      subtitle={feedKey === 'weekly_preliminary'
+        ? 'Weekly preliminary · top-10 countries · MBD'
+        : 'Monthly final · top-10 countries · MBD'}
       headerRight={
         <>
-          <Badge variant="muted">EIA MONTHLY</Badge>
-          {updatedLabel && (
-            <Badge variant="muted" style={{ color: 'var(--color-text-primary)' }}>
-              UPDATED {updatedLabel}
-            </Badge>
-          )}
+          <Pill
+            variant={feedKey === 'weekly_preliminary' ? 'active' : 'default'}
+            onClick={() => setFeedKey('weekly_preliminary')}
+          >
+            WEEKLY
+          </Pill>
+          <Pill
+            variant={feedKey === 'monthly_final' ? 'active' : 'default'}
+            onClick={() => setFeedKey('monthly_final')}
+          >
+            MONTHLY
+          </Pill>
+          <CadenceBadge
+            cadence={feedKey === 'weekly_preliminary' ? 'WED 10:30 ET' : 'MONTHLY · ~60D LAG'}
+            updated={data?.last_updated}
+          />
         </>
       }
     >
-      <div style={{ padding: '14px 18px 18px' }}>
-
-        {isLoading && !data ? (
-          <>
-            <Skel h={14} w={180} />
-            <div style={{ marginTop: 14 }}>
-              <Skel h={barHeight} />
+      {isLoading && !data ? (
+        <Skel h={320} />
+      ) : error ? (
+        <ErrorBlock error={error} height={320} />
+      ) : !feed?.top_origins?.length ? (
+        <ErrorBlock error={null} height={320} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Totals row */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            paddingBottom: 6,
+            borderBottom: '1px solid var(--color-border)',
+          }}>
+            <div>
+              <span style={{
+                fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
+                letterSpacing: '0.1em', color: 'var(--color-text-tertiary)',
+              }}>TOTAL IMPORTS</span>
             </div>
-          </>
-        ) : error ? (
-          <div style={{ height: barHeight + 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-bear)', letterSpacing: '0.08em' }}>
-              DATA UNAVAILABLE
-              {error instanceof ApiError ? ` · HTTP ${(error as ApiError).status}` : ''}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 600,
+                color: 'var(--color-text-primary)',
+              }}>{feed?.total_mbd?.toFixed(2) ?? '—'}</span>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11,
+                color: 'var(--color-text-tertiary)',
+              }}>MBD</span>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Total stat */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)' }}>
-                TOTAL IMPORTS
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {data?.total_imports_mbd != null ? data.total_imports_mbd.toFixed(1) : '—'}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-text-tertiary)' }}>MBD</span>
-            </div>
 
-            {/* Horizontal bar chart */}
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={barHeight}>
-                <BarChart
-                  layout="vertical"
-                  data={chartData}
-                  barSize={14}
-                  margin={{ top: 0, right: 40, bottom: 4, left: 0 }}
-                >
-                  <XAxis
-                    type="number"
-                    domain={[0, 'dataMax']}
-                    tick={{ fontFamily: 'var(--font-mono)', fontSize: 8, fill: 'var(--color-text-tertiary)' }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v: number) => v.toFixed(1)}
-                    tickCount={5}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={82}
-                    tick={{ fontFamily: 'var(--font-mono)', fontSize: 9, fill: 'var(--color-text-secondary)' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                    contentStyle={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)', borderRadius: 0, fontFamily: 'var(--font-mono)', fontSize: 11, padding: '5px 9px' }}
-                    itemStyle={{ color: 'var(--color-text-primary)' }}
-                    labelStyle={{ color: 'var(--color-text-secondary)', fontSize: 10, marginBottom: 2 }}
-                    formatter={(v: number) => [`${v.toFixed(2)} MBD`, 'IMPORTS']}
-                    wrapperStyle={{ outline: 'none' }}
-                  />
-                  <Bar dataKey="value" isAnimationActive={false} radius={[0, 2, 2, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell
-                        key={i}
-                        fill={entry.isCanada ? '#f5a623' : '#26a69a'}
-                        fillOpacity={0.8}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ height: barHeight, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-elevated)' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-text-tertiary)', letterSpacing: '0.07em' }}>
-                  NO IMPORT DATA
-                </span>
-              </div>
-            )}
-
-            {/* Legend */}
-            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 10, height: 10, background: '#f5a623', opacity: 0.8 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--color-text-tertiary)' }}>CANADA (DOMINANT)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 10, height: 10, background: '#26a69a', opacity: 0.8 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--color-text-tertiary)' }}>OTHER ORIGINS</span>
-              </div>
+          {/* Bar list */}
+          <div>
+            {/* Header row */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '160px 1fr 70px 60px 80px',
+              gap: 12,
+              padding: '4px 0',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              color: 'var(--color-text-tertiary)',
+              borderBottom: '1px solid var(--color-border)',
+            }}>
+              <span>COUNTRY</span>
+              <span />
+              <span style={{ textAlign: 'right' }}>MBD</span>
+              <span style={{ textAlign: 'right' }}>SHARE</span>
+              <span style={{ textAlign: 'right' }}>MoM</span>
             </div>
-          </>
-        )}
-      </div>
+            {feed.top_origins.map(o => (
+              <CountryRow key={o.country} {...o} maxVol={maxVol} />
+            ))}
+          </div>
+
+          {/* Total history chart */}
+          <div>
+            <div style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 10, fontWeight: 700,
+              letterSpacing: '0.1em', color: 'var(--color-text-tertiary)',
+              marginBottom: 6,
+            }}>TOTAL IMPORTS HISTORY</div>
+            <div ref={containerRef} style={{ height: 120, width: '100%' }} />
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }

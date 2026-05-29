@@ -1,6 +1,5 @@
 import { API_BASE_URL } from './config';
 import type {
-  UpstreamResponse,
   MidstreamResponse,
   DownstreamResponse,
   WPSRTable,
@@ -9,9 +8,13 @@ import type {
   CrackSpreadsResponse,
   RefineryUtilizationResponse,
   ProductDemandResponse,
-  UsProductionResponse,
-  DucWellsResponse,
+  CrudeProductionResponse,
+  RigCountResponse,
+  ProductionByRegionResponse,
+  ApiGravityResponse,
   CrudeImportsResponse,
+  NaturalGasResponse,
+  ReservesResponse,
   MarketNewsResponse,
   CompanyNewsResponse,
   OilQuotesResponse,
@@ -26,9 +29,6 @@ async function apiFetch<T>(path: string): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
-
-export const getUpstreamData = (): Promise<UpstreamResponse> =>
-  apiFetch('/api/upstream');
 
 export const getMidstreamData = (): Promise<MidstreamResponse> =>
   apiFetch('/api/midstream');
@@ -61,14 +61,28 @@ export const getRefineryUtilization = (): Promise<RefineryUtilizationResponse> =
 export const getProductDemand = (): Promise<ProductDemandResponse> =>
   apiFetch('/api/downstream/product-demand');
 
-export const getUsProduction = (): Promise<UsProductionResponse> =>
-  apiFetch('/api/upstream/us-production');
+// ── Upstream — US subtab (7 endpoints) ────────────────────────────────────────
 
-export const getDucWells = (): Promise<DucWellsResponse> =>
-  apiFetch('/api/upstream/duc-wells');
+export const getUsCrudeProduction = (): Promise<CrudeProductionResponse> =>
+  apiFetch('/api/upstream/us/crude-production');
 
-export const getCrudeImports = (): Promise<CrudeImportsResponse> =>
-  apiFetch('/api/upstream/crude-imports');
+export const getUsRigCount = (): Promise<RigCountResponse> =>
+  apiFetch('/api/upstream/us/rig-count');
+
+export const getUsProductionByRegion = (): Promise<ProductionByRegionResponse> =>
+  apiFetch('/api/upstream/us/production-by-region');
+
+export const getUsApiGravity = (): Promise<ApiGravityResponse> =>
+  apiFetch('/api/upstream/us/api-gravity');
+
+export const getUsCrudeImports = (): Promise<CrudeImportsResponse> =>
+  apiFetch('/api/upstream/us/crude-imports');
+
+export const getUsNaturalGas = (): Promise<NaturalGasResponse> =>
+  apiFetch('/api/upstream/us/natural-gas');
+
+export const getUsReserves = (): Promise<ReservesResponse> =>
+  apiFetch('/api/upstream/us/reserves');
 
 export const getMarketNews = (category = 'general'): Promise<MarketNewsResponse> =>
   apiFetch(`/api/news/market?category=${encodeURIComponent(category)}`);

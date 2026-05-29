@@ -19,32 +19,131 @@ export interface FredSeries {
   observations: FredObservation[];
 }
 
-// ── Upstream ─────────────────────────────────────────────────────────────────
+// ── Upstream — US subtab ─────────────────────────────────────────────────────
+// One interface per /api/upstream/us/* endpoint. Shapes mirror the FastAPI
+// response models in ci-desk-backend/app/models/upstream.py exactly.
 
-export interface RigCount {
-  available: boolean;
-  source: string;
-  report_date: string | null;
+// /upstream/us/crude-production
+export interface CrudeProdWeeklyPoint { date: string; value: number; }
+export interface CrudeProdMonthlyPoint {
+  date: string;
+  us_total: number | null;
+  l48: number | null;
+}
+export interface CrudeProductionResponse {
+  last_updated: string;
+  weekly_us_mbd: number | null;
+  weekly_us_wow: number | null;
+  weekly_us_yoy: number | null;
+  weekly_l48_mbd: number | null;
+  weekly_l48_wow: number | null;
+  weekly_net_imports_mbd: number | null;
+  weekly_net_imports_wow: number | null;
+  weekly_history:  CrudeProdWeeklyPoint[];
+  monthly_history: CrudeProdMonthlyPoint[];
+}
+
+// /upstream/us/rig-count
+export interface RigSeriesPoint {
+  date: string;
   total: number | null;
   oil: number | null;
   gas: number | null;
-  wow_change: number | null;
-  reason: string | null;
+  onshore: number | null;
+  offshore: number | null;
 }
-
-export interface OPECProduction {
-  available: boolean;
-  source: string;
-  reason: string;
-  report_date: string | null;
-  total_kbpd: number | null;
-}
-
-export interface UpstreamResponse {
-  crude_production: SeriesPoint[];
-  rig_count: RigCount;
-  opec: OPECProduction;
+export interface RigCountResponse {
   last_updated: string;
+  latest_total: number | null;
+  latest_oil: number | null;
+  latest_gas: number | null;
+  mom_change: number | null;
+  yoy_change: number | null;
+  history: RigSeriesPoint[];
+}
+
+// /upstream/us/production-by-region
+export interface RegionLatest {
+  current: number | null;
+  mom_change: number | null;
+  yoy_change: number | null;
+}
+export interface RegionHistoryPoint {
+  date: string;
+  texas: number | null;
+  north_dakota: number | null;
+  new_mexico: number | null;
+  padd2: number | null;
+  padd3: number | null;
+  gulf_of_america: number | null;
+}
+export interface ProductionByRegionResponse {
+  last_updated: string;
+  regions: Record<string, RegionLatest>;
+  history: RegionHistoryPoint[];
+}
+
+// /upstream/us/api-gravity
+export interface GravityPoint {
+  date: string;
+  heavy: number | null;
+  medium: number | null;
+  light: number | null;
+  condensate: number | null;
+}
+export interface ApiGravityResponse {
+  last_updated: string;
+  latest_heavy_pct: number | null;
+  latest_medium_pct: number | null;
+  latest_light_pct: number | null;
+  latest_condensate_pct: number | null;
+  history: GravityPoint[];
+}
+
+// /upstream/us/crude-imports
+export interface ImportCountry {
+  country: string;
+  volume_mbd: number;
+  share_pct: number;
+  mom_change: number | null;
+  is_opec_plus: boolean;
+}
+export interface ImportsHistoryPoint { date: string; value: number; }
+export interface ImportsFeed {
+  total_mbd: number | null;
+  top_origins: ImportCountry[];
+  history: ImportsHistoryPoint[];
+}
+export interface CrudeImportsResponse {
+  last_updated: string;
+  weekly_preliminary: ImportsFeed;
+  monthly_final: ImportsFeed;
+}
+
+// /upstream/us/natural-gas
+export interface NaturalGasPoint {
+  date: string;
+  gross_withdrawals: number | null;
+  dry_production: number | null;
+}
+export interface NaturalGasResponse {
+  last_updated: string;
+  latest_gross_withdrawals: number | null;
+  latest_dry_production: number | null;
+  yoy_change_pct: number | null;
+  history: NaturalGasPoint[];
+}
+
+// /upstream/us/reserves
+export interface ReservesPoint { year: string; value: number | null; }
+export interface ReservesResponse {
+  last_updated: string;
+  crude_latest_year: string | null;
+  crude_proved_bbbl: number | null;
+  ng_latest_year: string | null;
+  ng_proved_tcf: number | null;
+  crude_history: ReservesPoint[];
+  ng_history: ReservesPoint[];
 }
 
 // ── Midstream ────────────────────────────────────────────────────────────────
@@ -247,77 +346,6 @@ export interface ProductDemandResponse {
   distillate: ProductDemandSeries;
   jet: ProductDemandSeries;
   total: ProductDemandSeries;
-}
-
-// ── Upstream sub-endpoints ────────────────────────────────────────────────────
-
-export interface MonthlyProductionPoint {
-  date: string;
-  us_total: number | null;
-  padd3: number | null;
-  padd2: number | null;
-  gom: number | null;
-}
-
-export interface WeeklyProductionPoint {
-  date: string;
-  value: number;
-}
-
-export interface UsProductionResponse {
-  weekly_estimate_mbd: number | null;
-  weekly_wow_change: number | null;
-  monthly_history: MonthlyProductionPoint[];
-  weekly_history: WeeklyProductionPoint[];
-  last_updated: string;
-}
-
-export interface BasinDuc {
-  current: number | null;
-  mom_change: number | null;
-}
-
-export interface DucHistoryPoint {
-  date: string;
-  total: number | null;
-  permian: number | null;
-  eagle_ford: number | null;
-  bakken: number | null;
-  niobrara: number | null;
-  appalachia: number | null;
-  anadarko: number | null;
-  haynesville: number | null;
-}
-
-export interface DucWellsResponse {
-  last_updated: string;
-  total_duc: number | null;
-  mom_change: number | null;
-  mom_pct: number | null;
-  yoy_change: number | null;
-  yoy_pct: number | null;
-  signal: 'DRAW' | 'BUILD' | 'NEUTRAL';
-  history: DucHistoryPoint[];
-  basins: Record<string, BasinDuc>;
-}
-
-export interface ImportOrigin {
-  country: string;
-  volume_mbd: number;
-  share_pct: number;
-  mom_change: number | null;
-}
-
-export interface ImportHistoryPoint {
-  date: string;
-  value: number;
-}
-
-export interface CrudeImportsResponse {
-  last_updated: string;
-  total_imports_mbd: number | null;
-  top_origins: ImportOrigin[];
-  history_total: ImportHistoryPoint[];
 }
 
 // ── News (Finnhub) ────────────────────────────────────────────────────────────

@@ -71,15 +71,15 @@ export function News() {
       </div>
 
       {/* Content */}
-      {tab === 'news' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 18 }}>
-          <MarketNewsFeed />
-          <CompanyNewsFeed />
-          <FinancialJuiceWidget />
-        </div>
-      )}
+      <div style={{ display: tab === 'news' ? 'grid' : 'none', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 18 }}>
+        <MarketNewsFeed />
+        <CompanyNewsFeed />
+        <FinancialJuiceWidget />
+      </div>
 
-      {tab === 'calendar' && <EconomicCalendar />}
+      <div style={{ display: tab === 'calendar' ? 'block' : 'none' }}>
+        <EconomicCalendar />
+      </div>
     </div>
   )
 }

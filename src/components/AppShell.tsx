@@ -3,10 +3,49 @@ import { TickerStrip } from './TickerStrip'
 import { Navbar } from './Navbar'
 import { StatusBar } from './StatusBar'
 import { MarketsProvider } from '../contexts/MarketsContext'
+import {
+  useMidstreamData,
+  useCrackSpreads,
+  useRefineryUtilization,
+  useProductDemand,
+  useUsCrudeProduction,
+  useUsRigCount,
+  useUsProductionByRegion,
+  useUsApiGravity,
+  useUsCrudeImports,
+  useUsNaturalGas,
+  useUsReserves,
+  useCotPositions,
+  useMarketNews,
+  useEconomicCalendar,
+  useOilQuotes,
+  useWpsrTables,
+} from '../hooks/useApiData'
+
+function DataPrefetcher() {
+  useMidstreamData()
+  useCrackSpreads()
+  useRefineryUtilization()
+  useProductDemand()
+  useUsCrudeProduction()
+  useUsRigCount()
+  useUsProductionByRegion()
+  useUsApiGravity()
+  useUsCrudeImports()
+  useUsNaturalGas()
+  useUsReserves()
+  useCotPositions()
+  useMarketNews()
+  useEconomicCalendar()
+  useOilQuotes()
+  useWpsrTables()
+  return null
+}
 
 export function AppShell() {
   return (
     <MarketsProvider>
+      <DataPrefetcher />
       <TickerStrip />
       <Navbar />
 

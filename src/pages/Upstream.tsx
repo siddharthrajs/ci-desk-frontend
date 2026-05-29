@@ -1,17 +1,22 @@
-import { useUpstreamData } from '../hooks/useApiData'
-import { OpecMonitorPanel } from '../components/upstream/OpecMonitorPanel'
-import { SupplyBalancePanel } from '../components/upstream/SupplyBalancePanel'
-import { UsProductionPanel } from '../components/upstream/UsProductionPanel'
-import { DucWellsPanel } from '../components/upstream/DucWellsPanel'
-import { NonOpecProductionPanel } from '../components/upstream/NonOpecProductionPanel'
+import { useState } from 'react'
+import { Pill } from '../components/ui/Badge'
+import { HeroStrip } from '../components/upstream/HeroStrip'
+import { CrudeProductionPanel } from '../components/upstream/CrudeProductionPanel'
+import { RigCountPanel } from '../components/upstream/RigCountPanel'
+import { ProductionByRegionPanel } from '../components/upstream/ProductionByRegionPanel'
+import { ApiGravityPanel } from '../components/upstream/ApiGravityPanel'
 import { CrudeImportsPanel } from '../components/upstream/CrudeImportsPanel'
+import { NaturalGasPanel } from '../components/upstream/NaturalGasPanel'
+import { ReservesFooter } from '../components/upstream/ReservesFooter'
+
+type Subtab = 'us' | 'opec'
 
 export function Upstream() {
-  const { data, isLoading, error } = useUpstreamData()
-  const panelProps = { data, isLoading, error: error as Error | null }
+  const [subtab, setSubtab] = useState<Subtab>('us')
 
   return (
     <div>
+      {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <h1
           style={{
@@ -34,28 +39,81 @@ export function Upstream() {
             letterSpacing: '0.06em',
           }}
         >
-          SUPPLY · RIGS · OPEC+
+          E&amp;P · PRODUCTION · RIGS · IMPORTS
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* ── Top row: OPEC monitor (60%) + supply balance (40%) ─────────── */}
-        <div className="top-row-grid">
-          <OpecMonitorPanel {...panelProps} />
-          <SupplyBalancePanel {...panelProps} />
-        </div>
+      {/* Subtab nav */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <Pill variant={subtab === 'us'   ? 'active' : 'default'} onClick={() => setSubtab('us')}>UNITED STATES</Pill>
+        <Pill variant={subtab === 'opec' ? 'active' : 'default'} onClick={() => setSubtab('opec')}>OPEC+</Pill>
+      </div>
 
-        {/* ── Middle row: US production (65%) + DUC wells (35%) ──────────── */}
-        <div className="mid-row-grid">
-          <UsProductionPanel />
-          <DucWellsPanel />
-        </div>
+      {subtab === 'us' ? <UnitedStatesSubtab /> : <OpecPlaceholder />}
+    </div>
+  )
+}
 
-        {/* ── Bottom row: Non-OPEC production by country (full width) ─────── */}
-        <NonOpecProductionPanel {...panelProps} />
+function UnitedStatesSubtab() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-gap)' }}>
+      {/* HERO row — 4 KPI cards */}
+      <HeroStrip />
 
-        {/* ── Crude import origins (full width) ────────────────────────────── */}
+      {/* PRIMARY chart — full width */}
+      <CrudeProductionPanel />
+
+      {/* Row: rigs + production-by-region */}
+      <div className="top-row-grid">
+        <RigCountPanel />
+        <ProductionByRegionPanel />
+      </div>
+
+      {/* Row: imports + api gravity */}
+      <div className="top-row-grid">
         <CrudeImportsPanel />
+        <ApiGravityPanel />
+      </div>
+
+      {/* Natural gas — full width */}
+      <NaturalGasPanel />
+
+      {/* Reserves footer */}
+      <ReservesFooter />
+    </div>
+  )
+}
+
+function OpecPlaceholder() {
+  return (
+    <div style={{
+      background: 'var(--color-bg-panel)',
+      border: '1px solid var(--color-border)',
+      padding: '60px 24px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 10,
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-sans)',
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: 'var(--color-text-secondary)',
+      }}>
+        OPEC+ Country-Level Production
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
+        color: 'var(--color-text-tertiary)',
+        textAlign: 'center',
+        maxWidth: 480,
+      }}>
+        Coming soon — will pull EIA <span style={{ color: 'var(--color-amber)' }}>/v2/international/</span> production by country
+        (Saudi Arabia, Russia, Iraq, Iran, UAE, Kuwait, Nigeria, Venezuela, etc.) plus the OPEC+ quota tracker.
       </div>
     </div>
   )
