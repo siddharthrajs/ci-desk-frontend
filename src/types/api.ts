@@ -146,6 +146,138 @@ export interface ReservesResponse {
   ng_history: ReservesPoint[];
 }
 
+// ── Upstream — OPEC+ subtab ──────────────────────────────────────────────────
+// Mirrors ci-desk-backend/app/models/upstream.py. All volumes in MBD.
+
+export type OpecBasis = 'crude' | 'liquids';
+
+export interface OpecSparkPoint { period: string; value: number; }
+
+// /upstream/opec/production
+export interface OpecHero {
+  total_mbd: number | null;
+  total_mom: number | null;
+  latest_period: string | null;
+  saudi_mbd: number | null;
+  saudi_mom: number | null;
+  russia_mbd: number | null;
+  russia_mom: number | null;
+  iraq_mbd: number | null;
+  iraq_mom: number | null;
+}
+export interface OpecMemberRow {
+  iso3: string;
+  country: string;
+  latest_mbd: number;
+  mom: number | null;
+  mom_pct: number | null;
+  yoy: number | null;
+  yoy_pct: number | null;
+  share_pct: number | null;
+}
+export interface OpecProductionResponse {
+  last_updated: string;
+  hero: OpecHero;
+  table: OpecMemberRow[];
+  sparklines: Record<string, OpecSparkPoint[]>;
+}
+
+// /upstream/opec/history
+export interface OpecHistoryResponse {
+  last_updated: string;
+  members: Record<string, OpecSparkPoint[]>;
+  periods_available: number;
+}
+
+// /upstream/opec/overview (EIA STEO, anchored to international)
+export interface OpecOverviewHero {
+  last_actual_period: string | null;
+  spare_capacity_mbd: number | null;
+  production_capacity_mbd: number | null;
+  capacity_utilization_pct: number | null;
+  market_balance_mbd: number | null;
+  market_balance_label: string | null;
+}
+export interface OpecCapacityPoint {
+  period: string;
+  is_forecast: boolean;
+  production: number | null;
+  capacity: number | null;
+  spare: number | null;
+}
+export interface OpecSplitPoint {
+  period: string;
+  is_forecast: boolean;
+  opec: number | null;
+  opec_plus_other: number | null;
+  non_opec_plus: number | null;
+}
+export interface OpecBalancePoint {
+  period: string;
+  is_forecast: boolean;
+  net_withdrawals: number | null;
+  implied_balance: number | null;
+}
+export interface OpecOverviewResponse {
+  last_updated: string;
+  last_actual_period: string | null;
+  hero: OpecOverviewHero;
+  capacity_history: OpecCapacityPoint[];
+  split_history: OpecSplitPoint[];
+  balance_history: OpecBalancePoint[];
+}
+
+// /upstream/opec/disruptions (EIA STEO PADI_*)
+export interface OpecDisruptionCountry {
+  code: string;
+  name: string;
+  latest_mbd: number;
+  mom: number | null;
+}
+export interface OpecDisruptionsResponse {
+  last_updated: string;
+  latest_period: string | null;
+  total_mbd: number | null;
+  countries: OpecDisruptionCountry[];
+  series: Record<string, OpecSparkPoint[]>;
+}
+
+// /upstream/opec/compliance (quota JSON × international actuals)
+export interface OpecComplianceRow {
+  iso3: string;
+  country: string;
+  required_mbd: number;
+  actual_mbd: number | null;
+  delta_mbd: number | null;
+  status: string | null;
+}
+export interface OpecComplianceResponse {
+  last_updated: string;
+  as_of: string | null;
+  source: string | null;
+  actual_period: string | null;
+  total_required_mbd: number | null;
+  total_actual_mbd: number | null;
+  total_delta_mbd: number | null;
+  rows: OpecComplianceRow[];
+}
+
+// /upstream/opec/cross-check (EIA international vs JODI, 5 reporting members)
+export interface OpecCrossCheckPoint {
+  period: string;
+  eia: number | null;
+  jodi: number | null;
+}
+export interface OpecCrossCheckResponse {
+  last_updated: string;
+  members: string[];
+  latest_period: string | null;
+  eia_latest: number | null;
+  jodi_latest: number | null;
+  diff_latest: number | null;
+  history: OpecCrossCheckPoint[];
+}
+
 // ── Midstream ────────────────────────────────────────────────────────────────
 
 export interface Inventories {
@@ -266,6 +398,26 @@ export interface MacroResponse {
   fed_funds: FredSeries;
   wti: FredSeries;
   last_updated: string;
+}
+
+// ── Macro — Morning Brief ─────────────────────────────────────────────────────
+
+export interface Article {
+  title: string;
+  link: string;
+  published: string;
+  summary: string | null;
+}
+
+export interface SourceBrief {
+  source: string;
+  url: string;
+  articles: Article[];
+}
+
+export interface MorningBriefResponse {
+  sources: SourceBrief[];
+  generated_at: string;
 }
 
 // ── Downstream V2 (sub-endpoints) ────────────────────────────────────────────

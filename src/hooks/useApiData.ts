@@ -1,9 +1,11 @@
 import { useQuery, useQueries } from '@tanstack/react-query';
+import type { OpecBasis } from '../types/api';
 import {
   getMidstreamData,
   getDownstreamData,
   getCotPositions,
   getMacroData,
+  getMacroBrief,
   getCrackSpreads,
   getRefineryUtilization,
   getProductDemand,
@@ -14,6 +16,12 @@ import {
   getUsCrudeImports,
   getUsNaturalGas,
   getUsReserves,
+  getOpecProduction,
+  getOpecHistory,
+  getOpecOverview,
+  getOpecDisruptions,
+  getOpecCompliance,
+  getOpecCrossCheck,
   getMarketNews,
   getCompanyNews,
   getOilQuotes,
@@ -141,6 +149,56 @@ export const useUsReserves = () =>
     refetchInterval: WEEK_MS,
   });
 
+// ── Upstream — OPEC+ subtab ────────────────────────────────────────────────────
+
+export const useOpecProduction = (basis: OpecBasis = 'crude') =>
+  useQuery({
+    queryKey: ['opec-production', basis],
+    queryFn: () => getOpecProduction(basis),
+    staleTime: 6 * HOUR_MS,
+    refetchInterval: 6 * HOUR_MS,
+  });
+
+export const useOpecHistory = (basis: OpecBasis = 'crude') =>
+  useQuery({
+    queryKey: ['opec-history', basis],
+    queryFn: () => getOpecHistory(basis),
+    staleTime: DAY_MS,
+    refetchInterval: DAY_MS,
+  });
+
+export const useOpecOverview = () =>
+  useQuery({
+    queryKey: ['opec-overview'],
+    queryFn: getOpecOverview,
+    staleTime: 6 * HOUR_MS,
+    refetchInterval: 6 * HOUR_MS,
+  });
+
+export const useOpecDisruptions = () =>
+  useQuery({
+    queryKey: ['opec-disruptions'],
+    queryFn: getOpecDisruptions,
+    staleTime: 6 * HOUR_MS,
+    refetchInterval: 6 * HOUR_MS,
+  });
+
+export const useOpecCompliance = () =>
+  useQuery({
+    queryKey: ['opec-compliance'],
+    queryFn: getOpecCompliance,
+    staleTime: 6 * HOUR_MS,
+    refetchInterval: 6 * HOUR_MS,
+  });
+
+export const useOpecCrossCheck = () =>
+  useQuery({
+    queryKey: ['opec-cross-check'],
+    queryFn: getOpecCrossCheck,
+    staleTime: DAY_MS,
+    refetchInterval: DAY_MS,
+  });
+
 const MIN1_MS = 60_000;
 const SEC30_MS = 30_000;
 
@@ -186,4 +244,12 @@ export const useWpsrTables = () =>
       queryFn: () => getWpsrTable(n),
       staleTime: HOUR_MS,
     })),
+  });
+
+export const useMacroBrief = () =>
+  useQuery({
+    queryKey: ['macro-brief'],
+    queryFn: getMacroBrief,
+    staleTime: DAY_MS,
+    refetchInterval: DAY_MS,
   });

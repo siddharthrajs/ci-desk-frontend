@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { Markets } from './pages/Markets'
+import { Macro } from './pages/Macro'
 import { Upstream } from './pages/Upstream'
 import { Midstream } from './pages/Midstream'
 import { Downstream } from './pages/Downstream'
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<AppShell />}>
           <Route index element={<Navigate to="/markets" replace />} />
           <Route path="markets"    element={<Markets />} />
+          <Route path="macro"      element={<Macro />} />
           <Route path="upstream"   element={<Upstream />} />
           <Route path="midstream"  element={<Midstream />} />
           <Route path="downstream" element={<Downstream />} />

@@ -5,6 +5,7 @@ import type {
   WPSRTable,
   COTResponse,
   MacroResponse,
+  MorningBriefResponse,
   CrackSpreadsResponse,
   RefineryUtilizationResponse,
   ProductDemandResponse,
@@ -15,6 +16,13 @@ import type {
   CrudeImportsResponse,
   NaturalGasResponse,
   ReservesResponse,
+  OpecBasis,
+  OpecProductionResponse,
+  OpecHistoryResponse,
+  OpecOverviewResponse,
+  OpecDisruptionsResponse,
+  OpecComplianceResponse,
+  OpecCrossCheckResponse,
   MarketNewsResponse,
   CompanyNewsResponse,
   OilQuotesResponse,
@@ -86,6 +94,26 @@ export const getUsNaturalGas = (): Promise<NaturalGasResponse> =>
 export const getUsReserves = (): Promise<ReservesResponse> =>
   apiFetch('/api/upstream/us/reserves');
 
+// ── Upstream — OPEC+ subtab ───────────────────────────────────────────────────
+
+export const getOpecProduction = (basis: OpecBasis = 'crude'): Promise<OpecProductionResponse> =>
+  apiFetch(`/api/upstream/opec/production?basis=${basis}`);
+
+export const getOpecHistory = (basis: OpecBasis = 'crude'): Promise<OpecHistoryResponse> =>
+  apiFetch(`/api/upstream/opec/history?basis=${basis}`);
+
+export const getOpecOverview = (): Promise<OpecOverviewResponse> =>
+  apiFetch('/api/upstream/opec/overview');
+
+export const getOpecDisruptions = (): Promise<OpecDisruptionsResponse> =>
+  apiFetch('/api/upstream/opec/disruptions');
+
+export const getOpecCompliance = (): Promise<OpecComplianceResponse> =>
+  apiFetch('/api/upstream/opec/compliance');
+
+export const getOpecCrossCheck = (): Promise<OpecCrossCheckResponse> =>
+  apiFetch('/api/upstream/opec/cross-check');
+
 export const getMarketNews = (category = 'general'): Promise<MarketNewsResponse> =>
   apiFetch(`/api/news/market?category=${encodeURIComponent(category)}`);
 
@@ -97,6 +125,15 @@ export const getOilQuotes = (): Promise<OilQuotesResponse> =>
 
 export const getEconomicCalendar = (): Promise<EconomicCalendarResponse> =>
   apiFetch('/api/news/calendar');
+
+export const getMacroBrief = (): Promise<MorningBriefResponse> =>
+  apiFetch('/api/macro/brief');
+
+export const postMacroBriefRefresh = (): Promise<MorningBriefResponse> =>
+  fetch(`${API_BASE_URL}/api/macro/brief/refresh`, { method: 'POST' }).then(res => {
+    if (!res.ok) throw new ApiError(res.status, '/api/macro/brief/refresh');
+    return res.json() as Promise<MorningBriefResponse>;
+  });
 
 export const postAiSummary = (prompt?: string, provider = 'gemini'): Promise<AiSummaryResponse> => {
   const body: AiSummaryRequest = { provider, ...(prompt !== undefined ? { prompt } : {}) };

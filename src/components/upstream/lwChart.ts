@@ -90,3 +90,28 @@ export function toLwPoints<T extends { date?: string; period?: string; year?: st
     })
     .reverse()
 }
+
+/**
+ * Split a forecast-flagged monthly series into solid-actual and dashed-forecast
+ * LWChart point arrays. Input rows are newest-first (backend order). The
+ * forecast array repeats the last actual point so the two lines join cleanly.
+ */
+export function splitActualForecast(
+  rows: { period: string; is_forecast: boolean; value: number | null }[],
+): { actual: LwPoint[]; forecast: LwPoint[] } {
+  const asc = [...rows].filter(r => r.value != null).reverse()
+  const actual: LwPoint[] = []
+  const forecast: LwPoint[] = []
+  let boundary: LwPoint | null = null
+  for (const r of asc) {
+    const pt: LwPoint = { time: r.period, value: Number(r.value) }
+    if (r.is_forecast) {
+      if (forecast.length === 0 && boundary) forecast.push(boundary)
+      forecast.push(pt)
+    } else {
+      actual.push(pt)
+      boundary = pt
+    }
+  }
+  return { actual, forecast }
+}

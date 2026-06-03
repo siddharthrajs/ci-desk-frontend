@@ -8,6 +8,7 @@ import { ApiGravityPanel } from '../components/upstream/ApiGravityPanel'
 import { CrudeImportsPanel } from '../components/upstream/CrudeImportsPanel'
 import { NaturalGasPanel } from '../components/upstream/NaturalGasPanel'
 import { ReservesFooter } from '../components/upstream/ReservesFooter'
+import { OpecSubtab } from '../components/upstream/opec/OpecSubtab'
 
 type Subtab = 'us' | 'opec'
 
@@ -49,7 +50,7 @@ export function Upstream() {
         <Pill variant={subtab === 'opec' ? 'active' : 'default'} onClick={() => setSubtab('opec')}>OPEC+</Pill>
       </div>
 
-      {subtab === 'us' ? <UnitedStatesSubtab /> : <OpecPlaceholder />}
+      {subtab === 'us' ? <UnitedStatesSubtab /> : <OpecSubtab />}
     </div>
   )
 }
@@ -80,41 +81,6 @@ function UnitedStatesSubtab() {
 
       {/* Reserves footer */}
       <ReservesFooter />
-    </div>
-  )
-}
-
-function OpecPlaceholder() {
-  return (
-    <div style={{
-      background: 'var(--color-bg-panel)',
-      border: '1px solid var(--color-border)',
-      padding: '60px 24px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 10,
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-sans)',
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: 'var(--color-text-secondary)',
-      }}>
-        OPEC+ Country-Level Production
-      </div>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 11,
-        color: 'var(--color-text-tertiary)',
-        textAlign: 'center',
-        maxWidth: 480,
-      }}>
-        Coming soon — will pull EIA <span style={{ color: 'var(--color-amber)' }}>/v2/international/</span> production by country
-        (Saudi Arabia, Russia, Iraq, Iran, UAE, Kuwait, Nigeria, Venezuela, etc.) plus the OPEC+ quota tracker.
-      </div>
     </div>
   )
 }

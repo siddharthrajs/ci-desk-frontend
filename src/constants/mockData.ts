@@ -25,6 +25,7 @@ export const APP_META = {
 
 export const NAV_TABS = [
   { id: 'markets',    label: 'MARKETS',    path: '/markets' },
+  { id: 'macro',      label: 'MACRO',      path: '/macro' },
   { id: 'upstream',   label: 'UPSTREAM',   path: '/upstream' },
   { id: 'midstream',  label: 'MIDSTREAM',  path: '/midstream' },
   { id: 'downstream', label: 'DOWNSTREAM', path: '/downstream' },
