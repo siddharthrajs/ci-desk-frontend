@@ -35,13 +35,13 @@ export function RigCountPanel() {
       })
       const oil = chart.addSeries(LineSeries, {
         color: '#3dd6c4',
-        lineWidth: 1.5,
+        lineWidth: 2,
         priceFormat: { type: 'price', precision: 0, minMove: 1 },
         title: 'OIL',
       })
       const gas = chart.addSeries(LineSeries, {
         color: '#8b6cef',
-        lineWidth: 1.5,
+        lineWidth: 2,
         priceFormat: { type: 'price', precision: 0, minMove: 1 },
         title: 'GAS',
       })

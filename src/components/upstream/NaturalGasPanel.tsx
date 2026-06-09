@@ -32,7 +32,7 @@ export function NaturalGasPanel() {
       })
       const dry = chart.addSeries(LineSeries, {
         color: '#3dd6c4',
-        lineWidth: 1.5,
+        lineWidth: 2,
         priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
         title: 'DRY',
       })

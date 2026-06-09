@@ -644,12 +644,13 @@ export interface AiSummaryResponse {
 // ── Error ────────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly endpoint: string,
-    message?: string,
-  ) {
+  readonly status: number;
+  readonly endpoint: string;
+
+  constructor(status: number, endpoint: string, message?: string) {
     super(message ?? `API ${status} from ${endpoint}`);
     this.name = 'ApiError';
+    this.status = status;
+    this.endpoint = endpoint;
   }
 }
