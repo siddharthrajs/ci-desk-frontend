@@ -1,13 +1,17 @@
 import { useMidstreamData } from '../hooks/useApiData'
-import { InventoryKpiRow } from '../components/midstream/InventoryKpiRow'
-import { InventoryHistoryPanel } from '../components/midstream/InventoryHistoryPanel'
-import { SprLevelPanel } from '../components/midstream/SprLevelPanel'
+import { InventoryKpiRow }         from '../components/midstream/InventoryKpiRow'
+import { InventoryHistoryPanel }   from '../components/midstream/InventoryHistoryPanel'
+import { SprLevelPanel }           from '../components/midstream/SprLevelPanel'
 import { RefineryUtilizationPanel } from '../components/midstream/RefineryUtilizationPanel'
-import { DaysOfSupplyPanel } from '../components/midstream/DaysOfSupplyPanel'
+import { DaysOfSupplyPanel }       from '../components/midstream/DaysOfSupplyPanel'
+import { ExportsPanel }            from '../components/midstream/ExportsPanel'
+import { ImportsPanel }            from '../components/midstream/ImportsPanel'
+import { PaddMovementsPanel }      from '../components/midstream/PaddMovementsPanel'
 
 export function Midstream() {
+  // Legacy monolith — still consumed by SprLevelPanel and RefineryUtilizationPanel.
   const { data, isLoading, error } = useMidstreamData()
-  const panelProps = { data, isLoading, error: error as Error | null }
+  const legacyProps = { data, isLoading, error: error as Error | null }
 
   return (
     <div>
@@ -33,23 +37,34 @@ export function Midstream() {
             letterSpacing: '0.06em',
           }}
         >
-          INVENTORIES · SPR · REFINERY UTILIZATION · SUPPLY LOGISTICS
+          INVENTORIES · SPR · REFINERY · EXPORTS · IMPORTS · PADD FLOWS
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* ── Inventory KPI cards — full width ────────────────────────────── */}
-        <InventoryKpiRow {...panelProps} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-gap)' }}>
 
-        {/* ── Inventory History — full width ──────────────────────────────── */}
-        <InventoryHistoryPanel {...panelProps} />
+        {/* ── Inventory KPI strip — 5 stocks ──────────────────────────────── */}
+        <InventoryKpiRow />
 
-        {/* ── Bottom row: SPR | Refinery Util | Days of Supply ────────────── */}
+        {/* ── Inventory history — full-width lwcharts area ─────────────────── */}
+        <InventoryHistoryPanel />
+
+        {/* ── Bottom row: SPR | Refinery | Days of Supply ─────────────────── */}
         <div className="ms-bottom-grid">
-          <SprLevelPanel {...panelProps} />
-          <RefineryUtilizationPanel {...panelProps} />
-          <DaysOfSupplyPanel {...panelProps} />
+          <SprLevelPanel {...legacyProps} />
+          <RefineryUtilizationPanel {...legacyProps} />
+          <DaysOfSupplyPanel />
         </div>
+
+        {/* ── Crude exports — full-width ───────────────────────────────────── */}
+        <ExportsPanel />
+
+        {/* ── Imports | PADD Movements ─────────────────────────────────────── */}
+        <div className="top-row-grid">
+          <ImportsPanel />
+          <PaddMovementsPanel />
+        </div>
+
       </div>
     </div>
   )

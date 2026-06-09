@@ -278,7 +278,72 @@ export interface OpecCrossCheckResponse {
   history: OpecCrossCheckPoint[];
 }
 
-// ── Midstream ────────────────────────────────────────────────────────────────
+// ── Midstream — sub-endpoints ─────────────────────────────────────────────────
+
+// /midstream/stocks
+export interface MidStreamHistPoint { period: string; value: number; }
+export interface StockSeries {
+  latest_kbbl: number | null;
+  wow_kbbl: number | null;
+  history: MidStreamHistPoint[];
+}
+export interface MidstreamStocksResponse {
+  last_updated: string;
+  crude:      StockSeries;
+  cushing:    StockSeries;
+  gasoline:   StockSeries;
+  distillate: StockSeries;
+  jet:        StockSeries;
+  spr:        StockSeries;
+  dos_gasoline:   number | null;
+  dos_distillate: number | null;
+  dos_jet:        number | null;
+}
+
+// /midstream/exports
+export interface ExportsHistPoint { date: string; value: number; }
+export interface CrudeExportsResponse {
+  last_updated: string;
+  latest_mbd:       number | null;
+  wow_mbd:          number | null;
+  weekly_history:   ExportsHistPoint[];
+  latest_period_m:  string | null;
+  padd1_mbbl: number | null;
+  padd2_mbbl: number | null;
+  padd3_mbbl: number | null;
+  padd4_mbbl: number | null;
+  padd5_mbbl: number | null;
+  monthly_history: ExportsHistPoint[];
+}
+
+// /midstream/imports
+export interface MidImportOrigin {
+  country:      string;
+  volume_mbd:   number;
+  share_pct:    number;
+  mom_change:   number | null;
+  is_opec_plus: boolean;
+}
+export interface MidstreamImportsResponse {
+  last_updated:    string;
+  total_mbd:       number | null;
+  top_origins:     MidImportOrigin[];
+  history:         ExportsHistPoint[];
+  opec_plus_mbd:   number | null;
+  opec_plus_share: number | null;
+}
+
+// /midstream/padd-movements
+export interface PaddFlowPoint { period: string; value: number; }
+export interface PaddMovementsResponse {
+  last_updated:  string;
+  latest_period: string | null;
+  flows:         Record<string, PaddFlowPoint[]>;
+  net_receipts:  Record<string, number>;
+  flow_labels:   Record<string, string>;
+}
+
+// ── Midstream — legacy monolith ───────────────────────────────────────────────
 
 export interface Inventories {
   crude: SeriesPoint[];

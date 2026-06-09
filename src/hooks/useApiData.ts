@@ -1,7 +1,13 @@
 import { useQuery, useQueries } from '@tanstack/react-query';
 import type { OpecBasis } from '../types/api';
+import type { GetMarketsParams } from '../types/polymarket';
 import {
   getMidstreamData,
+  getMidstreamStocks,
+  getMidstreamRefinery,
+  getMidstreamExports,
+  getMidstreamImports,
+  getMidstreamPaddMovements,
   getDownstreamData,
   getCotPositions,
   getMacroData,
@@ -27,6 +33,8 @@ import {
   getOilQuotes,
   getEconomicCalendar,
   getWpsrTable,
+  getGeopoliticsEvents,
+  getMarkets,
 } from '../lib/api';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -37,6 +45,48 @@ export const useMidstreamData = () =>
     queryFn: getMidstreamData,
     staleTime: HOUR_MS,
     refetchInterval: HOUR_MS,
+  });
+
+// ── Midstream sub-endpoint hooks ──────────────────────────────────────────────
+
+export const useMidstreamStocks = () =>
+  useQuery({
+    queryKey: ['midstream-stocks'],
+    queryFn: getMidstreamStocks,
+    staleTime: HOUR_MS,
+    refetchInterval: HOUR_MS,
+  });
+
+export const useMidstreamRefinery = () =>
+  useQuery({
+    queryKey: ['midstream-refinery'],
+    queryFn: getMidstreamRefinery,
+    staleTime: HOUR_MS,
+    refetchInterval: HOUR_MS,
+  });
+
+export const useMidstreamExports = () =>
+  useQuery({
+    queryKey: ['midstream-exports'],
+    queryFn: getMidstreamExports,
+    staleTime: HOUR_MS,
+    refetchInterval: HOUR_MS,
+  });
+
+export const useMidstreamImports = () =>
+  useQuery({
+    queryKey: ['midstream-imports'],
+    queryFn: getMidstreamImports,
+    staleTime: 6 * HOUR_MS,
+    refetchInterval: 6 * HOUR_MS,
+  });
+
+export const useMidstreamPaddMovements = () =>
+  useQuery({
+    queryKey: ['midstream-padd-movements'],
+    queryFn: getMidstreamPaddMovements,
+    staleTime: DAY_MS,
+    refetchInterval: DAY_MS,
   });
 
 export const useDownstreamData = () =>
@@ -252,4 +302,22 @@ export const useMacroBrief = () =>
     queryFn: getMacroBrief,
     staleTime: DAY_MS,
     refetchInterval: DAY_MS,
+  });
+
+// ── Prediction Markets — Polymarket ──────────────────────────────────────────
+
+export const useGeopoliticsEvents = (offset = 0, limit = 20) =>
+  useQuery({
+    queryKey: ['polymarket', 'geopolitics', offset, limit],
+    queryFn: () => getGeopoliticsEvents(offset, limit),
+    staleTime: MIN1_MS,
+    refetchInterval: MIN1_MS,
+  });
+
+export const useMarkets = (params: GetMarketsParams) =>
+  useQuery({
+    queryKey: ['polymarket', 'markets', params],
+    queryFn: () => getMarkets(params),
+    staleTime: MIN1_MS,
+    refetchInterval: MIN1_MS,
   });

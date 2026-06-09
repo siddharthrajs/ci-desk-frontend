@@ -1,6 +1,17 @@
 import { API_BASE_URL } from './config';
 import type {
+  MarketsResponse,
+  MarketResponse,
+  EventsResponse,
+  GetMarketsParams,
+} from '../types/polymarket';
+import type {
   MidstreamResponse,
+  MidstreamStocksResponse,
+  CrudeExportsResponse,
+  MidstreamImportsResponse,
+  PaddMovementsResponse,
+  RefineryUtilizationHistory,
   DownstreamResponse,
   WPSRTable,
   COTResponse,
@@ -42,6 +53,23 @@ async function apiFetch<T>(path: string): Promise<T> {
 
 export const getMidstreamData = (): Promise<MidstreamResponse> =>
   apiFetch('/api/midstream');
+
+// ── Midstream — sub-endpoints ─────────────────────────────────────────────────
+
+export const getMidstreamStocks = (): Promise<MidstreamStocksResponse> =>
+  apiFetch('/api/midstream/stocks');
+
+export const getMidstreamRefinery = (): Promise<RefineryUtilizationHistory> =>
+  apiFetch('/api/midstream/refinery');
+
+export const getMidstreamExports = (): Promise<CrudeExportsResponse> =>
+  apiFetch('/api/midstream/exports');
+
+export const getMidstreamImports = (): Promise<MidstreamImportsResponse> =>
+  apiFetch('/api/midstream/imports');
+
+export const getMidstreamPaddMovements = (): Promise<PaddMovementsResponse> =>
+  apiFetch('/api/midstream/padd-movements');
 
 export const getDownstreamData = (): Promise<DownstreamResponse> =>
   apiFetch('/api/downstream');
@@ -134,6 +162,28 @@ export const postMacroBriefRefresh = (): Promise<MorningBriefResponse> =>
     if (!res.ok) throw new ApiError(res.status, '/api/macro/brief/refresh');
     return res.json() as Promise<MorningBriefResponse>;
   });
+
+// ── Prediction Markets — Polymarket ──────────────────────────────────────────
+
+export const getGeopoliticsEvents = (offset = 0, limit = 20): Promise<EventsResponse> =>
+  apiFetch(`/api/prediction-markets/polymarket/geopolitics?limit=${limit}&offset=${offset}`);
+
+export const getMarkets = (params: GetMarketsParams = {}): Promise<MarketsResponse> => {
+  const sp = new URLSearchParams();
+  if (params.limit !== undefined) sp.set('limit', String(params.limit));
+  if (params.offset !== undefined) sp.set('offset', String(params.offset));
+  if (params.active !== undefined) sp.set('active', String(params.active));
+  if (params.closed !== undefined) sp.set('closed', String(params.closed));
+  if (params.tagSlug) sp.set('tag_slug', params.tagSlug);
+  if (params.order) sp.set('order', params.order);
+  if (params.ascending !== undefined) sp.set('ascending', String(params.ascending));
+  if (params.q) sp.set('q', params.q);
+  const qs = sp.toString();
+  return apiFetch(`/api/prediction-markets/polymarket/markets${qs ? `?${qs}` : ''}`);
+};
+
+export const getMarketDetail = (conditionId: string): Promise<MarketResponse> =>
+  apiFetch(`/api/prediction-markets/polymarket/markets/${encodeURIComponent(conditionId)}`);
 
 export const postAiSummary = (prompt?: string, provider = 'gemini'): Promise<AiSummaryResponse> => {
   const body: AiSummaryRequest = { provider, ...(prompt !== undefined ? { prompt } : {}) };
