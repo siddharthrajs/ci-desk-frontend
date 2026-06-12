@@ -87,6 +87,9 @@ export const refreshWpsrTable = (tableNumber: number): Promise<WPSRTable> =>
 export const getCotPositions = (): Promise<COTResponse> =>
   apiFetch('/api/reports/cot');
 
+export const refreshCotPositions = (): Promise<COTResponse> =>
+  apiFetch('/api/reports/cot?refresh=true');
+
 export const getMacroData = (): Promise<MacroResponse> =>
   apiFetch('/api/macro');
 

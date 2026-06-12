@@ -1,6 +1,7 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import { getWpsrTable, refreshWpsrTable } from '../../lib/api'
+import { API_BASE_URL } from '../../lib/config'
 import type { WPSRTable, WPSRPeriodDates } from '../../types/api'
 import { Panel } from '../ui'
 import { WpsrSectionTable } from './WpsrSectionTable'
@@ -66,6 +67,20 @@ export function WpsrView() {
   const queryClient = useQueryClient()
   const [selectedTable, setSelectedTable] = useState<number>(1)
   const [refreshingAll, setRefreshingAll] = useState(false)
+  const [cronRefreshing, setCronRefreshing] = useState(false)
+
+  useEffect(() => {
+    const es = new EventSource(`${API_BASE_URL}/api/reports/wpsr/stream`)
+    es.addEventListener('wpsr_refresh_start', () => setCronRefreshing(true))
+    es.addEventListener('wpsr_refresh_done', () => {
+      setCronRefreshing(false)
+      TABLE_NUMBERS.forEach(n =>
+        queryClient.invalidateQueries({ queryKey: wpsrQueryKey(n) })
+      )
+    })
+    es.onerror = () => setCronRefreshing(false)
+    return () => es.close()
+  }, [queryClient])
 
   // Fire all 9 fetches in parallel; each table renders the moment its single
   // request lands rather than waiting on the slowest one. Tables already
@@ -134,6 +149,27 @@ export function WpsrView() {
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {cronRefreshing && (
+          <span style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--color-amber)',
+            letterSpacing: '0.06em',
+          }}>
+            <span style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'var(--color-amber)',
+              animation: 'wpsrPulse 1.2s ease-in-out infinite',
+            }} />
+            CRON REFRESH
+          </span>
+        )}
         {refreshingAll && inFlightCount > 0 && (
           <span style={{
             fontFamily: 'var(--font-mono)',

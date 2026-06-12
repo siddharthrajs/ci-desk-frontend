@@ -439,19 +439,84 @@ export interface WPSRResponse {
 
 // ── COT ──────────────────────────────────────────────────────────────────────
 
-export interface ManagedMoneyPosition {
-  commodity: string;
-  report_date: string;
+export interface COTPositionGroup {
   long: number;
   short: number;
-  net_position: number;
-  wow_change: number | null;
-  percentile_rank: number | null;
+  spreading?: number | null;
+}
+
+export interface COTChangeGroup {
+  long: number;
+  short: number;
+  spreading?: number | null;
+}
+
+export interface COTPctGroup {
+  long: number;
+  short: number;
+  spreading?: number | null;
+}
+
+export interface COTTraderGroup {
+  long?: number | null;
+  short?: number | null;
+  spreading?: number | null;
+}
+
+export interface COTConcentration {
+  gross_le4_long: number;
+  gross_le4_short: number;
+  gross_le8_long: number;
+  gross_le8_short: number;
+  net_le4_long: number;
+  net_le4_short: number;
+  net_le8_long: number;
+  net_le8_short: number;
+}
+
+export interface COTContract {
+  contract_market_code: string;
+  contract_market_name: string;
+  market_and_exchange_names: string;
+  exchange: string;
+  report_date: string;
+  contract_units: string;
+  open_interest: number;
+
+  producer_merchant: COTPositionGroup;
+  swap_dealers: COTPositionGroup;
+  managed_money: COTPositionGroup;
+  other_reportables: COTPositionGroup;
+  non_reportable: COTPositionGroup;
+
+  open_interest_change: number;
+  producer_merchant_change: COTChangeGroup;
+  swap_dealers_change: COTChangeGroup;
+  managed_money_change: COTChangeGroup;
+  other_reportables_change: COTChangeGroup;
+  non_reportable_change: COTChangeGroup;
+
+  producer_merchant_pct: COTPctGroup;
+  swap_dealers_pct: COTPctGroup;
+  managed_money_pct: COTPctGroup;
+  other_reportables_pct: COTPctGroup;
+  non_reportable_pct: COTPctGroup;
+
+  producer_merchant_traders: COTTraderGroup;
+  swap_dealers_traders: COTTraderGroup;
+  managed_money_traders: COTTraderGroup;
+  other_reportables_traders: COTTraderGroup;
+
+  concentration: COTConcentration;
+
+  mm_net: number;
+  mm_wow_net_change: number | null;
+  mm_percentile_rank: number | null;
 }
 
 export interface COTResponse {
-  wti: ManagedMoneyPosition;
-  brent: ManagedMoneyPosition;
+  contracts: COTContract[];
+  report_date: string;
   last_updated: string;
 }
 
