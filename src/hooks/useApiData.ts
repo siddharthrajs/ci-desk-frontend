@@ -10,6 +10,7 @@ import {
   getMidstreamPaddMovements,
   getDownstreamData,
   getCotPositions,
+  getCotHistory,
   getMacroData,
   getMacroBrief,
   getCrackSpreads,
@@ -102,6 +103,14 @@ export const useCotPositions = () =>
     queryKey: ['cot'],
     queryFn: getCotPositions,
     staleTime: 60_000,
+  });
+
+export const useCotHistory = (contractCode: string) =>
+  useQuery({
+    queryKey: ['cot-history', contractCode],
+    queryFn: () => getCotHistory(contractCode),
+    staleTime: 6 * 60 * 60 * 1000,
+    enabled: !!contractCode,
   });
 
 export const useMacroData = () =>

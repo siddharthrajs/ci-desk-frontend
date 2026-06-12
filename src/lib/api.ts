@@ -15,6 +15,7 @@ import type {
   DownstreamResponse,
   WPSRTable,
   COTResponse,
+  COTHistoryResponse,
   MacroResponse,
   MorningBriefResponse,
   CrackSpreadsResponse,
@@ -89,6 +90,9 @@ export const getCotPositions = (): Promise<COTResponse> =>
 
 export const refreshCotPositions = (): Promise<COTResponse> =>
   apiFetch('/api/reports/cot?refresh=true');
+
+export const getCotHistory = (contractCode: string): Promise<COTHistoryResponse> =>
+  apiFetch(`/api/positions/cot/${contractCode}`);
 
 export const getMacroData = (): Promise<MacroResponse> =>
   apiFetch('/api/macro');

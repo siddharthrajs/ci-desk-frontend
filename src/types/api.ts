@@ -520,6 +520,22 @@ export interface COTResponse {
   last_updated: string;
 }
 
+export interface COTHistoryPoint {
+  date: string;
+  mm_long: number;
+  mm_short: number;
+  mm_net: number;
+  mm_spread: number;
+  open_interest: number;
+}
+
+export interface COTHistoryResponse {
+  contract_market_code: string;
+  contract_market_name: string;
+  exchange: string;
+  history: COTHistoryPoint[];
+}
+
 // ── Macro ─────────────────────────────────────────────────────────────────────
 
 export interface MacroResponse {
