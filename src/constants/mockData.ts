@@ -24,16 +24,16 @@ export const APP_META = {
 }
 
 export const NAV_TABS = [
-  { id: 'markets',    label: 'MARKETS',    path: '/markets' },
-  { id: 'macro',      label: 'MACRO',      path: '/macro' },
-  { id: 'upstream',   label: 'UPSTREAM',   path: '/upstream' },
-  { id: 'midstream',  label: 'MIDSTREAM',  path: '/midstream' },
-  { id: 'downstream', label: 'DOWNSTREAM', path: '/downstream' },
-  { id: 'reports',    label: 'REPORTS',    path: '/reports' },
-  { id: 'positions',  label: 'POSITIONS',  path: '/positions' },
-  { id: 'news',                label: 'NEWS',       path: '/news' },
-  { id: 'prediction-markets', label: 'PREDICT',    path: '/prediction-markets' },
-  { id: 'components',         label: 'COMPONENTS', path: '/components' },
+  { id: 'news',               label: 'NEWS',       path: '/news',               envKey: 'VITE_TAB_NEWS' },
+  { id: 'markets',            label: 'MARKETS',    path: '/markets',            envKey: 'VITE_TAB_MARKETS' },
+  { id: 'macro',              label: 'MACRO',      path: '/macro',              envKey: 'VITE_TAB_MACRO' },
+  { id: 'upstream',           label: 'UPSTREAM',   path: '/upstream',           envKey: 'VITE_TAB_UPSTREAM' },
+  { id: 'midstream',          label: 'MIDSTREAM',  path: '/midstream',          envKey: 'VITE_TAB_MIDSTREAM' },
+  { id: 'downstream',         label: 'DOWNSTREAM', path: '/downstream',         envKey: 'VITE_TAB_DOWNSTREAM' },
+  { id: 'reports',            label: 'REPORTS',    path: '/reports',            envKey: 'VITE_TAB_REPORTS' },
+  { id: 'positions',          label: 'POSITIONS',  path: '/positions',          envKey: 'VITE_TAB_POSITIONS' },
+  { id: 'prediction-markets', label: 'PREDICT',    path: '/prediction-markets', envKey: 'VITE_TAB_PREDICTION_MARKETS' },
+  { id: 'components',         label: 'COMPONENTS', path: '/components',         envKey: 'VITE_TAB_COMPONENTS' },
 ] as const
 
 export const STATUS_STREAMS = 4

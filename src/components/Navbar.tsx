@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { APP_META, NAV_TABS } from '../constants/mockData'
+import { APP_META } from '../constants/mockData'
+import { enabledTabs } from '../lib/featureFlags'
 
 export function Navbar() {
   return (
@@ -66,7 +67,7 @@ export function Navbar() {
           padding: 3,
           borderRadius: 999,
         }}>
-          {NAV_TABS.map(tab => (
+          {enabledTabs.map(tab => (
             <NavLink
               key={tab.id}
               to={tab.path}
