@@ -59,36 +59,69 @@ function ContractSelector({
   const { data: cot } = useCotPositions()
   if (!cot?.contracts.length) return null
 
+  const selected = cot.contracts.find(c => c.contract_market_code === selectedCode)
+
   return (
-    <div style={{ overflowX: 'auto', marginBottom: 14 }}>
-      <div style={{ display: 'flex', gap: 0, border: '1px solid var(--color-border)', width: 'fit-content' }}>
-        {cot.contracts.map((c, i) => {
-          const active = c.contract_market_code === selectedCode
-          return (
-            <button
-              key={c.contract_market_code}
-              type="button"
-              onClick={() => onSelect(c.contract_market_code)}
-              style={{
-                padding: '6px 12px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.07em',
-                background: active ? 'var(--color-amber)' : 'transparent',
-                color: active ? '#000' : 'var(--color-text-secondary)',
-                border: 'none',
-                borderLeft: i > 0 ? '1px solid var(--color-border)' : 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'background 0.1s, color 0.1s',
-              }}
-            >
-              {c.contract_market_name}
-            </button>
-          )
-        })}
+    <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{
+        fontFamily: 'var(--font-sans)',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+        color: 'var(--color-text-tertiary)',
+        whiteSpace: 'nowrap',
+      }}>
+        CONTRACT
+      </span>
+      <div style={{ position: 'relative', flex: '0 0 auto' }}>
+        <select
+          value={selectedCode}
+          onChange={e => onSelect(e.target.value)}
+          style={{
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            background: 'var(--color-bg-panel)',
+            color: 'var(--color-text-primary)',
+            border: '1px solid var(--color-border)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.07em',
+            padding: '7px 36px 7px 12px',
+            cursor: 'pointer',
+            outline: 'none',
+            minWidth: 260,
+          }}
+        >
+          {cot.contracts.map(c => (
+            <option key={c.contract_market_code} value={c.contract_market_code}>
+              {c.contract_market_name} — {c.exchange}
+            </option>
+          ))}
+        </select>
+        {/* Custom chevron */}
+        <div style={{
+          position: 'absolute',
+          right: 10,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+          color: 'var(--color-text-tertiary)',
+          fontSize: 10,
+        }}>
+          ▾
+        </div>
       </div>
+      {selected && (
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--color-text-tertiary)',
+          letterSpacing: '0.06em',
+        }}>
+          CODE {selected.contract_market_code}
+        </span>
+      )}
     </div>
   )
 }

@@ -100,10 +100,10 @@ function HeaderBar({
 }
 
 // =============================================================================
-// Summary table — all contracts at a glance
+// Contract picker — dropdown + inline stats strip
 // =============================================================================
 
-function SummaryTable({
+function ContractPicker({
   contracts,
   selectedCode,
   onSelect,
@@ -112,61 +112,128 @@ function SummaryTable({
   selectedCode: string
   onSelect: (code: string) => void
 }) {
+  const selected = contracts.find(c => c.contract_market_code === selectedCode)
+
+  const stats = selected ? [
+    { label: 'OPEN INT',  value: fmtInt(selected.open_interest),                                        color: 'var(--color-text-primary)' },
+    { label: 'MM LONG',   value: fmtInt(selected.managed_money.long),                                   color: 'var(--color-bull)' },
+    { label: 'MM SHORT',  value: fmtInt(selected.managed_money.short),                                  color: 'var(--color-bear)' },
+    { label: 'MM NET',    value: fmtSigned(selected.mm_net),                                            color: signColor(selected.mm_net) },
+    { label: 'WOW Δ NET', value: fmtSigned(selected.mm_wow_net_change),                                color: signColor(selected.mm_wow_net_change) },
+    { label: '3YR %ILE',  value: selected.mm_percentile_rank != null ? fmtPct(selected.mm_percentile_rank) : '—', color: pctColor(selected.mm_percentile_rank) },
+  ] : []
+
   return (
-    <div style={{
-      overflowX: 'auto',
-      border: '1px solid var(--color-border)',
-      marginBottom: 16,
-    }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
-        <thead>
-          <tr style={{ background: 'var(--color-bg-elevated)' }}>
-            {['CONTRACT', 'EXCHANGE', 'OPEN INT', 'MM LONG', 'MM SHORT', 'MM NET', 'WOW Δ NET', '3YR %ILE'].map((h, i) => (
-              <th key={h} style={thStyle(i > 1 ? 'right' : 'left')}>{h}</th>
+    <div style={{ marginBottom: 16 }}>
+      {/* Dropdown row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        background: 'var(--color-bg-panel)',
+        border: '1px solid var(--color-border)',
+        borderBottom: stats.length ? 'none' : '1px solid var(--color-border)',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          color: 'var(--color-text-tertiary)',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+        }}>
+          CONTRACT
+        </span>
+        <div style={{ position: 'relative', flex: '1 1 0', minWidth: 0 }}>
+          <select
+            value={selectedCode}
+            onChange={e => onSelect(e.target.value)}
+            style={{
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              width: '100%',
+              background: 'var(--color-bg-elevated)',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--color-border)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.07em',
+              padding: '6px 32px 6px 10px',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            {contracts.map(c => (
+              <option key={c.contract_market_code} value={c.contract_market_code}>
+                {c.contract_market_name} — {c.exchange}
+              </option>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {contracts.map(c => {
-            const active = c.contract_market_code === selectedCode
-            return (
-              <tr
-                key={c.contract_market_code}
-                onClick={() => onSelect(c.contract_market_code)}
-                style={{
-                  cursor: 'pointer',
-                  background: active ? 'var(--color-bg-elevated)' : 'transparent',
-                  borderTop: '1px solid var(--color-border)',
-                }}
-              >
-                <td style={{ ...tdStyle('left'), fontWeight: active ? 700 : 400 }}>
-                  {active && (
-                    <span style={{
-                      display: 'inline-block',
-                      width: 4,
-                      height: 4,
-                      borderRadius: '50%',
-                      background: 'var(--color-amber)',
-                      marginRight: 6,
-                      verticalAlign: 'middle',
-                    }} />
-                  )}
-                  {c.contract_market_name}
-                </td>
-                <td style={tdStyle('left')}>{c.exchange}</td>
-                <td style={tdStyle('right')}>{fmtInt(c.open_interest)}</td>
-                <td style={{ ...tdStyle('right'), color: 'var(--color-bull)' }}>{fmtInt(c.managed_money.long)}</td>
-                <td style={{ ...tdStyle('right'), color: 'var(--color-bear)' }}>{fmtInt(c.managed_money.short)}</td>
-                <td style={{ ...tdStyle('right'), color: signColor(c.mm_net), fontWeight: 700 }}>{fmtSigned(c.mm_net)}</td>
-                <td style={{ ...tdStyle('right'), color: signColor(c.mm_wow_net_change) }}>{fmtSigned(c.mm_wow_net_change)}</td>
-                <td style={{ ...tdStyle('right'), color: pctColor(c.mm_percentile_rank), fontWeight: 700 }}>
-                  {c.mm_percentile_rank != null ? fmtPct(c.mm_percentile_rank) : '—'}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+          </select>
+          <div style={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: 'var(--color-text-tertiary)',
+            fontSize: 10,
+          }}>
+            ▾
+          </div>
+        </div>
+        {selected && (
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.06em',
+            flexShrink: 0,
+          }}>
+            CODE {selected.contract_market_code}
+          </span>
+        )}
+      </div>
+
+      {/* Quick stats strip for selected contract */}
+      {stats.length > 0 && (
+        <div style={{
+          display: 'flex',
+          border: '1px solid var(--color-border)',
+          background: 'var(--color-bg-panel)',
+          flexWrap: 'wrap',
+        }}>
+          {stats.map((s, i) => (
+            <div key={s.label} style={{
+              flex: '1 1 0',
+              minWidth: 100,
+              padding: '7px 12px',
+              borderLeft: i > 0 ? '1px solid var(--color-border)' : 'none',
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                color: 'var(--color-text-tertiary)',
+                marginBottom: 3,
+              }}>
+                {s.label}
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: s.color,
+              }}>
+                {s.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -535,7 +602,7 @@ export function CotView() {
         onRefresh={handleRefresh}
       />
 
-      <SummaryTable
+      <ContractPicker
         contracts={data.contracts}
         selectedCode={activeCode}
         onSelect={setSelectedCode}
