@@ -231,13 +231,6 @@ function DetailTable({ contract: c }: { contract: COTContract }) {
     },
   ]
 
-  function cellColor(section: RowSection, val: string, side?: 'long' | 'short'): string {
-    if (section === 'changes') return signColor(parseFloat(val.replace(/,/g, '')))
-    if (section === 'positions' && side === 'long') return 'var(--color-bull)'
-    if (section === 'positions' && side === 'short') return 'var(--color-bear)'
-    return 'var(--color-text-primary)'
-  }
-
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ borderCollapse: 'collapse', minWidth: 1100, width: '100%', fontSize: 11 }}>
